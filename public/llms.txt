@@ -1,0 +1,23 @@
+# ShastraLab
+
+> AI-powered answer evaluation platform that helps UPSC and state PSC aspirants write examiner-ready answers through structured feedback inspired by the Indian Shastra tradition.
+
+ShastraLab evaluates handwritten and typed answers using an AI examiner framework, providing structure, relevance, and depth feedback. Aspirants upload answers, receive scored feedback, and track progress over time.
+
+## Pages
+
+- [Home](/): Overview of ShastraLab and its Shastra-inspired evaluation framework.
+- [Sign In](/auth): Authentication for aspirants.
+- [Dashboard](/dashboard): Personal practice dashboard and progress overview.
+- [Syllabi](/syllabi): Browse exam syllabi for UPSC and state PSC.
+- [Analyze Paper](/analyze): Upload and analyze a single question paper.
+- [Batch Analyze](/batch-analyze): Upload multiple papers for bulk analysis.
+- [Compare Papers](/compare): Side-by-side comparison of question papers.
+- [Year Trends](/year-over-year): Year-over-year topic and question trend analysis.
+- [Written Practice](/written-practice): Submit handwritten or typed answers for AI evaluation.
+- [Timed Mock Test](/mock-test): Take timed mock tests under exam conditions.
+- [Leaderboard](/leaderboard): Aspirant rankings and performance.
+- [Achievements](/achievements): Earn badges for milestones.
+- [My Progress](/submission-history): History of submitted answers and scores.
+- [Question Bank](/questions): Browse curated practice questions.
+- [Reports](/reports): Detailed performance reports.

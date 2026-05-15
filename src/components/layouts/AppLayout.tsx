@@ -79,6 +79,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <button
         className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-card shadow-md"
         onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
       >
         {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>

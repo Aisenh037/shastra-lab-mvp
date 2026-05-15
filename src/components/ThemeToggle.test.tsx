@@ -140,5 +140,4 @@ describe('ThemeToggle', () => {
     const toggleButton = screen.getByRole('button');
     expect(toggleButton).toHaveAttribute('aria-label', 'Toggle theme');
   });
-  });
 });

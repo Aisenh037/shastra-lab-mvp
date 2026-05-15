@@ -44,6 +44,7 @@ export default function Index() {
         </div>
       </header>
 
+      <main>
       {/* Hero Section */}
       <section className="py-20 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
@@ -218,6 +219,8 @@ export default function Index() {
           </Link>
         </div>
       </section>
+
+      </main>
 
       {/* Footer */}
       <footer className="border-t py-8">

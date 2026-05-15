@@ -56,7 +56,7 @@ export interface MockApiResponse<T> {
   status: number;
 }
 
-export const createMockApiResponse = <T>(
+export const createMockApiResponse = <T,>(
   data: T | null = null,
   error: Error | null = null,
   status: number = 200

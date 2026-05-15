@@ -497,7 +497,4 @@ export default function SubjectAnalytics({ data, submissions = [], loading, erro
     </div>
   );
 }
-<<<<<<< HEAD
-=======
 export { SubjectAnalytics };
->>>>>>> f3bfcda (updated the mvp spec to industry-grade)

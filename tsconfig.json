@@ -5,15 +5,6 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-<<<<<<< HEAD
-    }, 
-    "noImplicitAny": false,
-    "noUnusedParameters": false,
-    "skipLibCheck": true,
-    "allowJs": true,
-    "noUnusedLocals": false,
-    "strictNullChecks": false
-=======
     },
     /* Strict Mode Enabled */
     "strict": true,
@@ -23,6 +14,5 @@
     "noUnusedLocals": true,
     "skipLibCheck": true,
     "allowJs": false
->>>>>>> f3bfcda (updated the mvp spec to industry-grade)
   }
 }

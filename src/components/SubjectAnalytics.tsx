@@ -34,9 +34,6 @@ interface Submission {
 }
 
 interface SubjectAnalyticsProps {
-<<<<<<< HEAD
-  submissions: Submission[];
-=======
   data?: {
     subjectPerformance: Array<{ subject: string; score: number; attempts: number }>;
     topicDistribution: Array<{ topic: string; count: number; percentage: number }>;
@@ -45,7 +42,6 @@ interface SubjectAnalyticsProps {
   submissions?: Submission[];
   loading?: boolean;
   error?: string;
->>>>>>> f3bfcda (updated the mvp spec to industry-grade)
 }
 
 interface SubjectStats {
@@ -72,9 +68,6 @@ const COLORS = [
   'hsl(350 89% 60%)',
 ];
 
-<<<<<<< HEAD
-export default function SubjectAnalytics({ submissions }: SubjectAnalyticsProps) {
-=======
 export default function SubjectAnalytics({ data, submissions = [], loading, error }: SubjectAnalyticsProps) {
   // Handle loading state
   if (loading) {
@@ -187,7 +180,6 @@ export default function SubjectAnalytics({ data, submissions = [], loading, erro
       </div>
     );
   }
->>>>>>> f3bfcda (updated the mvp spec to industry-grade)
   const subjectStats = useMemo(() => {
     const subjectMap = new Map<string, Submission[]>();
     
@@ -318,11 +310,7 @@ export default function SubjectAnalytics({ data, submissions = [], loading, erro
   };
 
   return (
-<<<<<<< HEAD
-    <div className="space-y-6">
-=======
     <div data-testid="subject-analytics" className="space-y-6">
->>>>>>> f3bfcda (updated the mvp spec to industry-grade)
       <div className="flex items-center gap-2">
         <Layers className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold">Subject-wise Analytics</h2>

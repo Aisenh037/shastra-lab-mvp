@@ -250,40 +250,44 @@ export default function Dashboard() {
               )}
             </CardContent>
           </Card>
-        </div>
+          </div>
+        </section>
 
         {/* Quick Actions */}
-        <Card variant="ornate" className="animate-slide-up" style={{ animationDelay: '600ms' }}>
-          <CardHeader>
-            <CardTitle className="text-lg">Quick Actions</CardTitle>
-            <CardDescription>Get started with common tasks</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link to="/analyze">
-                <Button variant="outline" className="w-full h-auto py-6 flex flex-col gap-2">
-                  <FileText className="h-6 w-6 text-primary" />
-                  <span>Analyze New Paper</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/syllabi">
-                <Button variant="outline" className="w-full h-auto py-6 flex flex-col gap-2">
-                  <BookOpen className="h-6 w-6 text-primary" />
-                  <span>Manage Syllabi</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/questions">
-                <Button variant="outline" className="w-full h-auto py-6 flex flex-col gap-2">
-                  <HelpCircle className="h-6 w-6 text-primary" />
-                  <span>View Question Bank</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        <section aria-labelledby="quick-actions-heading">
+          <h2 id="quick-actions-heading" className="sr-only">Quick Actions</h2>
+          <Card variant="ornate" className="animate-slide-up" style={{ animationDelay: '600ms' }}>
+            <CardHeader>
+              <CardTitle className="text-lg">Quick Actions</CardTitle>
+              <CardDescription>Get started with common tasks</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Link to="/analyze">
+                  <Button variant="outline" className="w-full h-auto py-6 flex flex-col gap-2">
+                    <FileText className="h-6 w-6 text-primary" />
+                    <span>Analyze New Paper</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link to="/syllabi">
+                  <Button variant="outline" className="w-full h-auto py-6 flex flex-col gap-2">
+                    <BookOpen className="h-6 w-6 text-primary" />
+                    <span>Manage Syllabi</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link to="/questions">
+                  <Button variant="outline" className="w-full h-auto py-6 flex flex-col gap-2">
+                    <HelpCircle className="h-6 w-6 text-primary" />
+                    <span>View Question Bank</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
       </div>
     </AppLayout>
   );

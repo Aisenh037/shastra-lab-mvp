@@ -294,6 +294,7 @@ export default function Syllabi() {
                     <Button
                       size="sm"
                       variant="ghost"
+                      aria-label={`Use ${template.name} template`}
                       onClick={() => handleUseTemplate(template)}
                     >
                       <Copy className="h-4 w-4" />

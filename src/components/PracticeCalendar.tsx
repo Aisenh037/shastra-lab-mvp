@@ -172,7 +172,7 @@ export function PracticeCalendar({ className }: PracticeCalendarProps) {
                 )}
               </p>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToPreviousWeek}>
+                <Button variant="ghost" size="icon" aria-label="Previous week" className="h-8 w-8" onClick={goToPreviousWeek}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <Button
@@ -184,7 +184,7 @@ export function PracticeCalendar({ className }: PracticeCalendarProps) {
                 >
                   Today
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToNextWeek}>
+                <Button variant="ghost" size="icon" aria-label="Next week" className="h-8 w-8" onClick={goToNextWeek}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>

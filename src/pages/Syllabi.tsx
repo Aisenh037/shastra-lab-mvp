@@ -345,12 +345,13 @@ export default function Syllabi() {
                         <Badge variant="secondary" className="mt-1">{syllabus.exam_type}</Badge>
                       </div>
                       <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => handleEdit(syllabus)}>
+                        <Button size="sm" variant="ghost" aria-label={`Edit ${syllabus.name}`} onClick={() => handleEdit(syllabus)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           size="sm"
                           variant="ghost"
+                          aria-label={`Delete ${syllabus.name}`}
                           className="text-destructive hover:text-destructive"
                           onClick={() => handleDelete(syllabus.id)}
                         >

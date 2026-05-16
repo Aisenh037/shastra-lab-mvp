@@ -1146,6 +1146,7 @@ export default function WrittenPractice() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label="Close video summary"
                             onClick={() => setShowVideoFeedback(false)}
                           >
                             <X className="h-4 w-4" />

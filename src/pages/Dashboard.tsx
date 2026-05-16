@@ -135,33 +135,38 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {statCards.map((stat, index) => (
-            <Card 
-              key={stat.label} 
-              variant="shastra"
-              className="animate-slide-up"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="text-3xl font-bold mt-1">
-                      {loading ? '...' : stat.value}
-                    </p>
+        <section aria-labelledby="overview-heading">
+          <h2 id="overview-heading" className="sr-only">Overview</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {statCards.map((stat, index) => (
+              <Card 
+                key={stat.label} 
+                variant="shastra"
+                className="animate-slide-up"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                      <p className="text-3xl font-bold mt-1">
+                        {loading ? '...' : stat.value}
+                      </p>
+                    </div>
+                    <div className={`p-3 rounded-lg bg-secondary ${stat.color}`}>
+                      <stat.icon className="h-6 w-6" />
+                    </div>
                   </div>
-                  <div className={`p-3 rounded-lg bg-secondary ${stat.color}`}>
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section aria-labelledby="analytics-heading">
+          <h2 id="analytics-heading" className="sr-only">Analytics</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Difficulty Distribution */}
           <Card variant="decorated" className="animate-slide-up" style={{ animationDelay: '400ms' }}>
             <CardHeader>

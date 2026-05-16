@@ -1049,6 +1049,7 @@ export default function WrittenPractice() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label={notifications.permission === 'granted' ? 'Notifications enabled' : 'Enable notifications'}
                             onClick={async () => {
                               if (notifications.permission !== 'granted') {
                                 await notifications.requestPermission();
@@ -1067,6 +1068,7 @@ export default function WrittenPractice() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label={tts.isSpeaking ? 'Stop reading feedback' : 'Read feedback aloud'}
                             onClick={() => {
                               if (tts.isSpeaking) {
                                 tts.stop();
@@ -1090,6 +1092,7 @@ export default function WrittenPractice() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label="Generate video summary"
                             onClick={handleGenerateVideo}
                             disabled={isGeneratingVideo}
                             title="Generate video summary"

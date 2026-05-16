@@ -566,7 +566,7 @@ export default function WrittenPractice() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 Add Practice Question
-                <Button variant="ghost" size="icon" onClick={() => setShowAddQuestion(false)}>
+                <Button variant="ghost" size="icon" aria-label="Close add question form" onClick={() => setShowAddQuestion(false)}>
                   <X className="h-4 w-4" />
                 </Button>
               </CardTitle>

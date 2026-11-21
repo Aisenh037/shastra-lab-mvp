@@ -1,0 +1,47 @@
+{
+  "match": { "questionText": "Examine the role of civil society organizations in strengthening democracy in India." },
+  "status": "draft",
+  "reviewedBy": null,
+  "rubric": {
+    "version": 1,
+    "directive": "examine",
+    "paper": "GS2",
+    "maxMarks": 10,
+    "wordLimit": 150,
+    "source": "draft",
+    "dimensions": [
+      {
+        "id": "context",
+        "label": "Context",
+        "points": [
+          { "id": "ctx-1", "text": "Defines civil society organisations as the space between state, market and family (NGOs, SHGs, trade unions, advocacy groups)", "mustHave": true }
+        ]
+      },
+      {
+        "id": "roles",
+        "label": "Democratic roles",
+        "points": [
+          { "id": "role-1", "text": "Watchdog role: holding government accountable, social audits, exposing corruption", "mustHave": true },
+          { "id": "role-2", "text": "Policy advocacy that shaped laws, with an example such as the RTI Act or MGNREGA", "mustHave": true },
+          { "id": "role-3", "text": "Voice and representation for marginalised groups", "mustHave": false },
+          { "id": "role-4", "text": "Service delivery and last-mile implementation in health, education or disaster relief", "mustHave": false },
+          { "id": "role-5", "text": "Civic and voter awareness, deepening participation", "mustHave": false }
+        ]
+      },
+      {
+        "id": "limits",
+        "label": "Limitations",
+        "points": [
+          { "id": "lim-1", "text": "Challenges: funding and FCRA regulation, accountability and transparency of CSOs, politicisation", "mustHave": true }
+        ]
+      },
+      {
+        "id": "way-forward",
+        "label": "Way forward",
+        "points": [
+          { "id": "wf-1", "text": "Balanced conclusion, e.g. a regulatory framework that ensures CSO accountability without curbing dissent", "mustHave": false }
+        ]
+      }
+    ]
+  }
+}

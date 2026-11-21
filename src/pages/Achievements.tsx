@@ -13,6 +13,7 @@ import {
 } from '@/components/AchievementBadge';
 import { StreakDisplay } from '@/components/StreakDisplay';
 import { StreakFreeze } from '@/components/StreakFreeze';
+import { features } from '@/config/features';
 import { PracticeCalendar } from '@/components/PracticeCalendar';
 import { ReminderSettings } from '@/components/ReminderSettings';
 import { motion } from 'framer-motion';
@@ -107,6 +108,7 @@ export default function Achievements() {
         {/* Practice Calendar, Streak Freeze, and Reminder Settings */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <PracticeCalendar />
+          {features.streakFreeze && (
           <StreakFreeze
             freezeCount={streak.freezeCount}
             streakAtRisk={streak.streakAtRisk}
@@ -117,6 +119,7 @@ export default function Achievements() {
             onAddFreezes={addFreezes}
             onRecoverStreak={recoverStreak}
           />
+          )}
           <ReminderSettings />
         </div>
 

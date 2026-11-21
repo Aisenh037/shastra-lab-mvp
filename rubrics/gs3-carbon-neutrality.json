@@ -1,0 +1,53 @@
+{
+  "match": { "questionText": "What is carbon neutrality? Discuss India's approach towards achieving its climate commitments." },
+  "status": "draft",
+  "reviewedBy": null,
+  "rubric": {
+    "version": 1,
+    "directive": "discuss",
+    "paper": "GS3",
+    "maxMarks": 15,
+    "wordLimit": 250,
+    "source": "draft",
+    "dimensions": [
+      {
+        "id": "concept",
+        "label": "Concept",
+        "points": [
+          { "id": "con-1", "text": "Defines carbon neutrality / net zero: emissions balanced by removals or offsets", "mustHave": true }
+        ]
+      },
+      {
+        "id": "commitments",
+        "label": "Commitments",
+        "points": [
+          { "id": "com-1", "text": "India's 2070 net-zero target", "mustHave": true },
+          { "id": "com-2", "text": "Updated NDC targets (emissions intensity reduction, non-fossil power capacity share)", "mustHave": true },
+          { "id": "com-3", "text": "Renewable capacity goal, e.g. 500 GW non-fossil capacity", "mustHave": false }
+        ]
+      },
+      {
+        "id": "policy",
+        "label": "Policy",
+        "points": [
+          { "id": "pol-1", "text": "Domestic measures such as the National Green Hydrogen Mission, solar parks, or the carbon credit trading scheme", "mustHave": true },
+          { "id": "pol-2", "text": "Behavioural or international initiatives such as Mission LiFE or the International Solar Alliance", "mustHave": false }
+        ]
+      },
+      {
+        "id": "equity",
+        "label": "Equity",
+        "points": [
+          { "id": "eq-1", "text": "Principle of common but differentiated responsibilities, low per-capita emissions, and the demand for climate finance and technology transfer", "mustHave": true }
+        ]
+      },
+      {
+        "id": "way-forward",
+        "label": "Way forward",
+        "points": [
+          { "id": "wf-1", "text": "Challenges (coal dependence, financing, storage) and a concrete way forward", "mustHave": false }
+        ]
+      }
+    ]
+  }
+}

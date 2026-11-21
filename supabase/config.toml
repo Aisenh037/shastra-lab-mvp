@@ -1,25 +1,25 @@
 project_id = "twvbntdtnpawhfpygvyn"
 
 [functions.analyze-question]
-verify_jwt = false
+verify_jwt = true
 
 [functions.extract-questions]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ocr-pdf]
-verify_jwt = false
+verify_jwt = true
 
 [functions.evaluate-answer]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ocr-handwriting]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-progress-report]
-verify_jwt = false
+verify_jwt = true
 
 [functions.tts-feedback]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-video-feedback]
-verify_jwt = false
+verify_jwt = true

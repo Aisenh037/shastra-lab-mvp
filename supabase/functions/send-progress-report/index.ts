@@ -40,23 +40,27 @@ serve(async (req: Request): Promise<Response> => {
 
     const { user_id, report_type, email: requestEmail }: ReportRequest = await req.json();
 
-    // Get auth header for manual reports
-    const authHeader = req.headers.get("Authorization");
-    let targetUserId = user_id;
-    let targetEmail = requestEmail;
+    // Two callers only:
+    //  - a scheduled job holding the service-role key, which may name any user_id + email
+    //  - a signed-in user, who can only send their own report to their own address
+    // (Previously anyone could pass any user_id and email and receive that user's report.)
+    const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    let targetUserId: string | undefined;
+    let targetEmail: string | undefined;
 
-    if (authHeader && !user_id) {
-      const token = authHeader.replace("Bearer ", "");
-      const { data, error: authError } = await supabase.auth.getClaims(token);
-      if (authError || !data?.claims) {
-        console.error("Auth error:", authError);
+    if (token && token === supabaseServiceKey) {
+      targetUserId = user_id;
+      targetEmail = requestEmail;
+    } else {
+      const { data, error: authError } = await supabase.auth.getUser(token);
+      if (!token || authError || !data?.user) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      targetUserId = data.claims.sub as string;
-      targetEmail = requestEmail || (data.claims.email as string);
+      targetUserId = data.user.id;
+      targetEmail = data.user.email ?? undefined;
     }
 
     if (!targetUserId || !targetEmail) {

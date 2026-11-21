@@ -21,6 +21,7 @@ import Questions from "./pages/Questions";
 import Reports from "./pages/Reports";
 import SubmissionHistory from "./pages/SubmissionHistory";
 import NotFound from "./pages/NotFound";
+import { features } from "@/config/features";
 
 const queryClient = new QueryClient();
 
@@ -43,7 +44,7 @@ const App = () => (
               <Route path="/year-over-year" element={<YearOverYear />} />
               <Route path="/written-practice" element={<WrittenPractice />} />
               <Route path="/mock-test" element={<MockTest />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
+              {features.leaderboard && <Route path="/leaderboard" element={<Leaderboard />} />}
               <Route path="/achievements" element={<Achievements />} />
               <Route path="/questions" element={<Questions />} />
               <Route path="/reports" element={<Reports />} />

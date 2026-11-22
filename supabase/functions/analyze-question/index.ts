@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { azureChat } from "../_shared/azure.ts";
+import { chat } from "../_shared/llm.ts";
 import { requireSignedIn } from "../_shared/auth.ts";
 
 const corsHeaders = {
@@ -17,16 +17,8 @@ serve(async (req) => {
 
   try {
     const { question, topics } = await req.json();
-    const { url: AI_URL, headers: AI_HEADERS } = azureChat();
-
-    const response = await fetch(AI_URL, {
-      method: "POST",
-      headers: {
-        ...AI_HEADERS,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: [
+    
+    const { content } = await chat({ messages: [
           {
             role: "system",
             content: `You are an expert exam analyst. Analyze the given question and:
@@ -40,18 +32,7 @@ Return ONLY valid JSON: {"topic": "string", "difficulty": "Easy|Medium|Hard", "i
             role: "user",
             content: `Available topics: ${topics.join(', ')}\n\nQuestion: ${question}`
           }
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error("AI gateway error");
-    }
-
-    const data = await response.json();
-    const content = data.choices[0].message.content;
+        ] });
     
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     const analysis = jsonMatch ? JSON.parse(jsonMatch[0]) : { topic: null, difficulty: null, importance_explanation: null };

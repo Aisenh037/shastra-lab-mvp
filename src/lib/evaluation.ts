@@ -16,7 +16,7 @@ export interface EvaluationResult {
   modelComparison: string;
   breakdown: ScoreBreakdown;
   creditsRemaining: number | null;
-  provenance: { engine: string; rubric: string; model: string; latencyMs: number };
+  provenance: { engine: string; rubric: string; provider: string; model: string; latencyMs: number };
 }
 
 export type EvaluationErrorCode = "NO_CREDITS" | "INSUFFICIENT_EVIDENCE" | "EVALUATION_FAILED" | "UNAUTHORIZED" | "UNKNOWN";

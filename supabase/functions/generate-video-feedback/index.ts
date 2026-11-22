@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { azureChat } from "../_shared/azure.ts";
+import { chat } from "../_shared/llm.ts";
 import { requireSignedIn } from "../_shared/auth.ts";
 
 const corsHeaders = {
@@ -34,17 +34,9 @@ serve(async (req) => {
       questionText,
     }: VideoFeedbackRequest = await req.json();
 
-    const { url: AI_URL, headers: AI_HEADERS } = azureChat();
-
+    
     // Generate a structured video script/storyboard for the feedback
-    const response = await fetch(AI_URL, {
-      method: "POST",
-      headers: {
-        ...AI_HEADERS,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: [
+    const { content } = await chat({ messages: [
           {
             role: "system",
             content: `You are a video content creator for educational feedback. 
@@ -65,22 +57,7 @@ Overall: ${overallFeedback}
 Strengths: ${strengths.join(", ")}
 Improvements: ${improvements.join(", ")}`,
           },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      throw new Error("Failed to generate video content");
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+        ] });
 
     let videoData;
     try {

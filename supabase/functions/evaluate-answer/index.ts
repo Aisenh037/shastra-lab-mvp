@@ -6,7 +6,7 @@
 // taken refunds it.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders, json, requireUser } from "../_shared/auth.ts";
-import { azureChat } from "../_shared/azure.ts";
+import { chat } from "../_shared/llm.ts";
 import { deriveRubricFromKeyPoints, validateRubric, type Rubric } from "../_shared/rubric.ts";
 import {
   buildPrompts,
@@ -26,37 +26,6 @@ interface Body {
   imagePaths?: string[];
   /** Admin only: evaluate without charging or saving (calibration runs). */
   dryRun?: boolean;
-}
-
-async function callModel(system: string, user: string): Promise<string> {
-  const { url, headers } = azureChat();
-
-  let lastError = "";
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { ...headers, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: user },
-        ],
-        response_format: { type: "json_object" },
-        max_completion_tokens: 4000,
-      }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      const content = data.choices?.[0]?.message?.content;
-      if (typeof content === "string" && content.trim()) return content;
-      lastError = "empty model response";
-    } else {
-      lastError = `Azure OpenAI ${res.status}: ${(await res.text()).slice(0, 300)}`;
-      if (res.status < 500 && res.status !== 429) break; // not retryable
-    }
-    await new Promise((r) => setTimeout(r, 1500));
-  }
-  throw new Error(lastError);
 }
 
 serve(async (req) => {
@@ -147,8 +116,15 @@ serve(async (req) => {
       subject: question.subject,
     });
     const started = Date.now();
-    const raw = await callModel(prompts.system, prompts.user);
-    const judgement = parseJudgement(extractJson(raw), rubric);
+    const llm = await chat({
+      json: true,
+      maxTokens: 4000,
+      messages: [
+        { role: "system", content: prompts.system },
+        { role: "user", content: prompts.user },
+      ],
+    });
+    const judgement = parseJudgement(extractJson(llm.content), rubric);
     const breakdown = computeScore(rubric, judgement, answer);
     const latencyMs = Date.now() - started;
 
@@ -159,7 +135,7 @@ serve(async (req) => {
       ...judgement.feedback,
       breakdown,
       creditsRemaining,
-      provenance: { engine: ENGINE_VERSION, rubric: rubric.source, model: Deno.env.get("AZURE_OPENAI_DEPLOYMENT") ?? "gpt-5.2-chat", latencyMs },
+      provenance: { engine: ENGINE_VERSION, rubric: rubric.source, provider: llm.provider, model: llm.model, latencyMs },
     };
 
     if (!dryRun) {
@@ -186,7 +162,7 @@ serve(async (req) => {
       if (insertError) throw new Error(`saving submission failed: ${insertError.message}`);
     }
 
-    console.log(JSON.stringify({ event: "evaluated", submissionId, score: breakdown.score, rubric: rubric.source, unverified: breakdown.unverifiedClaims, latencyMs }));
+    console.log(JSON.stringify({ event: "evaluated", submissionId, score: breakdown.score, rubric: rubric.source, model: llm.model, unverified: breakdown.unverifiedClaims, latencyMs }));
     return json(req, evaluation);
   } catch (error) {
     console.error("evaluation failed", submissionId, error);

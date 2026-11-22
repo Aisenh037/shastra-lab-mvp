@@ -20,12 +20,13 @@ What changed, how to switch it on, and the daily operations for the 30-day paid 
 ## Where it runs
 
 - **Supabase project:** `shastralab` (`xcrlxcyicagthchxasgx`, Mumbai, ap-south-1), in KC's own Supabase account. It replaces the Lovable Cloud project `twvbntdtnpawhfpygvyn`; users and data from there were not migrated.
-- **AI:** every function calls Azure OpenAI (`_shared/azure.ts`). Nothing depends on Lovable's AI gateway any more.
+- **AI:** open models on free tiers, through any OpenAI-compatible API (`_shared/llm.ts`). Scoring: `openai/gpt-oss-120b` on Groq, falling back to `qwen/qwen3.8-27b:free` on OpenRouter. Answer photos: Qwen3.8 27B reads the image (`_shared/ocr.ts`). Azure stays optional. Swapping providers or models is a secrets change only; see `.env.example`.
+- **Free-tier limits:** Groq allows about 1,000 requests and 200K tokens a day for gpt-oss-120b, roughly 40 evaluations a day; past that the fallback takes over. Before the pilot grows, add a card on Groq (Developer tier) or move to a paid open-model endpoint. Re-run calibration whenever the model changes.
 
 ## Switch it on
 
 1. **Apply the migration** `supabase/migrations/20261121160000_phase1_pilot_readiness.sql` (`supabase db push`, or let Lovable apply it on sync, then confirm in the dashboard that `question_rubrics`, `evaluation_credits` and `credit_ledger` exist).
-2. **Deploy all edge functions.** `config.toml` now has `verify_jwt = true` for every function. Optional secret: `AZURE_OPENAI_DEPLOYMENT` (default `gpt-5.2-chat`).
+2. **Deploy all edge functions** and set the AI secrets listed in `.env.example`. `config.toml` has `verify_jwt = true` for every function.
 3. **Make yourself an admin:** `insert into user_roles (user_id, role) select id, 'admin' from auth.users where email = 'you@example.com';`
 4. **Create the payment links** in Razorpay (₹99 / ₹199 / ₹499) and set `VITE_PAYMENT_LINK_5`, `VITE_PAYMENT_LINK_10` and `VITE_PAYMENT_LINK_30` in the frontend env (see `.env.example`). Packs without a link are hidden.
 5. **Load rubrics** (see `rubrics/README.md`). The three in the repo are drafts; nothing uses them until a mentor marks them reviewed.
@@ -58,7 +59,7 @@ Re-running with the same payment id does nothing, so a double paste can't double
 
 ```bash
 npm run test:engine   # scoring, rubric, weakness, calibration (vitest)
-npm run test:edge     # evaluate-answer end to end in Deno, Supabase + Azure faked
+npm run test:edge     # evaluate-answer end to end in Deno (Supabase and AI providers faked): fallback, JSON-mode retry, OCR
 npm run rubrics:validate
 ```
 

@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { azureChat } from "../_shared/azure.ts";
+import { chat } from "../_shared/llm.ts";
 import { requireSignedIn } from "../_shared/auth.ts";
 
 const corsHeaders = {
@@ -17,33 +17,14 @@ serve(async (req) => {
 
   try {
     const { text } = await req.json();
-    const { url: AI_URL, headers: AI_HEADERS } = azureChat();
-
-    const response = await fetch(AI_URL, {
-      method: "POST",
-      headers: {
-        ...AI_HEADERS,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: [
+    
+    const { content } = await chat({ messages: [
           {
             role: "system",
             content: `You are an expert at extracting exam questions from raw text. Extract each individual question from the provided exam paper text. Ignore headers, instructions, page numbers, and formatting text. Return ONLY a JSON array with objects containing: question_number (integer) and question_text (string). Preserve the exact wording of each question.`
           },
           { role: "user", content: text }
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error("AI gateway error");
-    }
-
-    const data = await response.json();
-    const content = data.choices[0].message.content;
+        ] });
     
     // Parse JSON from response
     const jsonMatch = content.match(/\[[\s\S]*\]/);

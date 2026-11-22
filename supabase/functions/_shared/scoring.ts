@@ -323,6 +323,9 @@ export interface ScoreBreakdown {
   criteria: Record<Criterion, { rating: number; reason: string }>;
   mustHaveMissed: string[];
   unverifiedClaims: number;
+  /** Which AI provider and model produced the judgement (set by the job runner). */
+  provider?: string;
+  model?: string;
 }
 
 const COVERAGE_VALUE: Record<Coverage, number> = { full: 1, partial: 0.5, none: 0 };

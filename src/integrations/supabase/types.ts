@@ -40,14 +40,19 @@ export type Database = {
           answer_image_paths: string[] | null
           answer_image_url: string | null
           answer_text: string | null
+          attempts: number
           created_at: string
           engine_version: string | null
           evaluated_at: string | null
           format_suggestions: string | null
           id: string
           improvements: Json | null
+          job_payload: Json | null
+          last_error: string | null
+          locked_until: string | null
           max_score: number | null
           model_comparison: string | null
+          next_attempt_at: string | null
           overall_feedback: string | null
           paragraph_analysis: Json | null
           question_id: string | null
@@ -62,14 +67,19 @@ export type Database = {
           answer_image_paths?: string[] | null
           answer_image_url?: string | null
           answer_text?: string | null
+          attempts?: number
           created_at?: string
           engine_version?: string | null
           evaluated_at?: string | null
           format_suggestions?: string | null
           id?: string
           improvements?: Json | null
+          job_payload?: Json | null
+          last_error?: string | null
+          locked_until?: string | null
           max_score?: number | null
           model_comparison?: string | null
+          next_attempt_at?: string | null
           overall_feedback?: string | null
           paragraph_analysis?: Json | null
           question_id?: string | null
@@ -84,14 +94,19 @@ export type Database = {
           answer_image_paths?: string[] | null
           answer_image_url?: string | null
           answer_text?: string | null
+          attempts?: number
           created_at?: string
           engine_version?: string | null
           evaluated_at?: string | null
           format_suggestions?: string | null
           id?: string
           improvements?: Json | null
+          job_payload?: Json | null
+          last_error?: string | null
+          locked_until?: string | null
           max_score?: number | null
           model_comparison?: string | null
+          next_attempt_at?: string | null
           overall_feedback?: string | null
           paragraph_analysis?: Json | null
           question_id?: string | null

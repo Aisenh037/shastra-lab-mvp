@@ -57,3 +57,10 @@ export async function requireSignedIn(req: Request): Promise<Response | null> {
   const ctx = await requireUser(req);
   return ctx instanceof Response ? ctx : null;
 }
+
+/** Service-role client for trusted server-side work (bypasses RLS). */
+export function serviceClient(): SupabaseClient {
+  return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
+    auth: { persistSession: false },
+  });
+}

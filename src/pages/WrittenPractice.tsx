@@ -102,6 +102,7 @@ export default function WrittenPractice() {
   const [answerImagePreviews, setAnswerImagePreviews] = useState<string[]>([]);
   const [submissionType, setSubmissionType] = useState<'typed' | 'handwritten'>('typed');
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluationStage, setEvaluationStage] = useState<string | null>(null);
   const [outOfCredits, setOutOfCredits] = useState(false);
   const [isExtractingText, setIsExtractingText] = useState(false);
   const [ocrProgress, setOcrProgress] = useState({ current: 0, total: 0 });
@@ -366,13 +367,12 @@ export default function WrittenPractice() {
           ? await uploadAnswerImages(user.id, answerImages)
           : [];
 
-      // The server checks the answer, charges one credit, scores it and saves the submission.
-      const evalData = await evaluateAnswer({
-        questionId: selectedQuestion.id,
-        answerText,
-        submissionType,
-        imagePaths,
-      });
+      // The server checks the answer, charges one credit and queues it; we watch for the result.
+      setEvaluationStage('queued');
+      const evalData = await evaluateAnswer(
+        { questionId: selectedQuestion.id, answerText, submissionType, imagePaths },
+        { onStatus: setEvaluationStage },
+      );
 
       setEvaluation(evalData as Evaluation);
       publishCredits(evalData.creditsRemaining);
@@ -404,13 +404,19 @@ export default function WrittenPractice() {
         publishCredits(0);
       } else {
         toast({
-          title: error instanceof EvaluationError && error.code === 'INSUFFICIENT_EVIDENCE' ? 'Not enough to evaluate' : 'Evaluation failed',
+          title:
+            error instanceof EvaluationError && error.code === 'INSUFFICIENT_EVIDENCE'
+              ? 'Not enough to evaluate'
+              : error instanceof EvaluationError && error.code === 'STILL_PROCESSING'
+                ? 'Still evaluating'
+                : 'Evaluation failed',
           description: error instanceof Error ? error.message : 'Please try again.',
           variant: 'destructive',
         });
       }
     } finally {
       setIsEvaluating(false);
+      setEvaluationStage(null);
     }
   };
 
@@ -984,7 +990,7 @@ export default function WrittenPractice() {
                     {isEvaluating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Evaluating...
+                        {evaluationStage === 'processing' ? 'Examiner is reading your answer…' : 'Submitting…'}
                       </>
                     ) : (
                       <>

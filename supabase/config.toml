@@ -23,3 +23,6 @@ verify_jwt = true
 
 [functions.generate-video-feedback]
 verify_jwt = true
+
+[functions.evaluation-worker]
+verify_jwt = true

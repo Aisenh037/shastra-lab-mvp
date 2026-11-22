@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { azureChat } from "../_shared/azure.ts";
 import { requireSignedIn } from "../_shared/auth.ts";
 
 const corsHeaders = {
@@ -16,18 +17,15 @@ serve(async (req) => {
 
   try {
     const { question, topics } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const { url: AI_URL, headers: AI_HEADERS } = azureChat();
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(AI_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        ...AI_HEADERS,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",

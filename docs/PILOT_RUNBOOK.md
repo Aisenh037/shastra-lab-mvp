@@ -17,6 +17,11 @@ What changed, how to switch it on, and the daily operations for the 30-day paid 
 | Recurring weaknesses | None | "Your recurring gaps" on the dashboard after 3 answers |
 | Video, audio, leaderboard, streak freeze | On | Off (turn back on with `VITE_FEATURE_*=true`) |
 
+## Where it runs
+
+- **Supabase project:** `shastralab` (`xcrlxcyicagthchxasgx`, Mumbai, ap-south-1), in KC's own Supabase account. It replaces the Lovable Cloud project `twvbntdtnpawhfpygvyn`; users and data from there were not migrated.
+- **AI:** every function calls Azure OpenAI (`_shared/azure.ts`). Nothing depends on Lovable's AI gateway any more.
+
 ## Switch it on
 
 1. **Apply the migration** `supabase/migrations/20261121160000_phase1_pilot_readiness.sql` (`supabase db push`, or let Lovable apply it on sync, then confirm in the dashboard that `question_rubrics`, `evaluation_credits` and `credit_ledger` exist).

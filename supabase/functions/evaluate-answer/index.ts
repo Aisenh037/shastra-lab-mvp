@@ -6,6 +6,7 @@
 // taken refunds it.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders, json, requireUser } from "../_shared/auth.ts";
+import { azureChat } from "../_shared/azure.ts";
 import { deriveRubricFromKeyPoints, validateRubric, type Rubric } from "../_shared/rubric.ts";
 import {
   buildPrompts,
@@ -28,17 +29,13 @@ interface Body {
 }
 
 async function callModel(system: string, user: string): Promise<string> {
-  const endpoint = Deno.env.get("AZURE_OPENAI_ENDPOINT");
-  const key = Deno.env.get("AZURE_OPENAI_API_KEY");
-  if (!endpoint || !key) throw new Error("Azure OpenAI credentials not configured");
-  const deployment = Deno.env.get("AZURE_OPENAI_DEPLOYMENT") ?? "gpt-5.2-chat";
-  const url = `${endpoint}openai/deployments/${deployment}/chat/completions?api-version=2025-04-01-preview`;
+  const { url, headers } = azureChat();
 
   let lastError = "";
   for (let attempt = 0; attempt < 2; attempt++) {
     const res = await fetch(url, {
       method: "POST",
-      headers: { "api-key": key, "Content-Type": "application/json" },
+      headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({
         messages: [
           { role: "system", content: system },

@@ -23,6 +23,8 @@ import {
 import { cn } from '@/lib/utils';
 import ShastraLabLogo from '@/components/ShastraLabLogo';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { CreditsBadge } from '@/components/Credits';
+import { features } from '@/config/features';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -37,7 +39,7 @@ const navItems = [
   { path: '/year-over-year', label: 'Year Trends', icon: Calendar },
   { path: '/written-practice', label: 'Written Practice', icon: PenLine },
   { path: '/mock-test', label: 'Timed Mock Test', icon: Timer },
-  { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+  ...(features.leaderboard ? [{ path: '/leaderboard', label: 'Leaderboard', icon: Trophy }] : []),
   { path: '/achievements', label: 'Achievements', icon: Award },
   { path: '/submission-history', label: 'My Progress', icon: ClipboardList },
   { path: '/questions', label: 'Question Bank', icon: Library },
@@ -124,6 +126,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
           {/* User section */}
           <div className="p-4 border-t border-sidebar-border">
+            <CreditsBadge />
             <div className="flex items-center justify-between px-4 py-2 mb-2">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center">

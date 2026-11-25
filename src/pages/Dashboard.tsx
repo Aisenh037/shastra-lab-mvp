@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { StreakDisplay } from '@/components/StreakDisplay';
+import { WeaknessPanel } from '@/components/WeaknessPanel';
 
 interface Stats {
   totalPapers: number;
@@ -133,6 +134,9 @@ export default function Dashboard() {
             variant="compact"
           />
         </div>
+
+        {/* Recurring gaps across the learner's answers */}
+        <WeaknessPanel />
 
         {/* Stats Grid */}
         <section aria-labelledby="overview-heading">

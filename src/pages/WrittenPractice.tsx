@@ -39,6 +39,11 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { evaluateAnswer, uploadAnswerImages, EvaluationError, type ScoreBreakdown } from '@/lib/evaluation';
+import { publishCredits } from '@/hooks/useCredits';
+import { OutOfCreditsNotice } from '@/components/Credits';
+import { ScoreBreakdownCard } from '@/components/ScoreBreakdownCard';
+import { features } from '@/config/features';
 
 interface PracticeQuestion {
   id: string;
@@ -78,6 +83,7 @@ interface Evaluation {
   }>;
   formatSuggestions: string;
   modelComparison: string;
+  breakdown?: ScoreBreakdown;
 }
 
 export default function WrittenPractice() {
@@ -96,6 +102,7 @@ export default function WrittenPractice() {
   const [answerImagePreviews, setAnswerImagePreviews] = useState<string[]>([]);
   const [submissionType, setSubmissionType] = useState<'typed' | 'handwritten'>('typed');
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [outOfCredits, setOutOfCredits] = useState(false);
   const [isExtractingText, setIsExtractingText] = useState(false);
   const [ocrProgress, setOcrProgress] = useState({ current: 0, total: 0 });
   const [extractedText, setExtractedText] = useState<string | null>(null);
@@ -339,75 +346,36 @@ export default function WrittenPractice() {
       return;
     }
 
+    if (!answerText.trim()) {
+      toast({
+        title: 'No text to evaluate',
+        description: 'We could not read text from your photo. Type or correct the answer text below, then submit.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsEvaluating(true);
     setEvaluation(null);
+    setOutOfCredits(false);
 
     try {
-      const imageUrls: string[] = [];
+      // Photos go to a private bucket; only storage paths are kept.
+      const imagePaths =
+        submissionType === 'handwritten' && answerImages.length > 0
+          ? await uploadAnswerImages(user.id, answerImages)
+          : [];
 
-      // Upload images if handwritten
-      if (submissionType === 'handwritten' && answerImages.length > 0) {
-        for (let i = 0; i < answerImages.length; i++) {
-          const file = answerImages[i];
-          const fileName = `${user.id}/${Date.now()}_page${i + 1}_${file.name}`;
-          const { error: uploadError } = await supabase.storage
-            .from('answer-uploads')
-            .upload(fileName, file);
-
-          if (uploadError) throw uploadError;
-
-          const { data: urlData } = supabase.storage
-            .from('answer-uploads')
-            .getPublicUrl(fileName);
-          
-          imageUrls.push(urlData.publicUrl);
-        }
-      }
-      
-      const imageUrl = imageUrls.length > 0 ? imageUrls.join(',') : null;
-
-      // For handwritten, we'd need OCR - for now we'll prompt user to also type
-      const answerForEvaluation = submissionType === 'typed' 
-        ? answerText 
-        : answerText || 'Handwritten answer uploaded - OCR pending';
-
-      // Call evaluation function
-      const { data: evalData, error: evalError } = await supabase.functions.invoke('evaluate-answer', {
-        body: {
-          questionText: selectedQuestion.question_text,
-          questionType: selectedQuestion.question_type,
-          maxMarks: selectedQuestion.max_marks,
-          wordLimit: selectedQuestion.word_limit,
-          modelAnswer: selectedQuestion.model_answer,
-          keyPoints: selectedQuestion.key_points,
-          studentAnswer: answerForEvaluation,
-          subject: selectedQuestion.subject,
-          topic: selectedQuestion.topic,
-        },
+      // The server checks the answer, charges one credit, scores it and saves the submission.
+      const evalData = await evaluateAnswer({
+        questionId: selectedQuestion.id,
+        answerText,
+        submissionType,
+        imagePaths,
       });
 
-      if (evalError) throw evalError;
-
-      setEvaluation(evalData);
-
-      // Save submission
-      await supabase.from('answer_submissions').insert({
-        user_id: user.id,
-        question_id: selectedQuestion.id,
-        answer_text: answerText || null,
-        answer_image_url: imageUrl,
-        submission_type: submissionType,
-        status: 'evaluated',
-        score: evalData.score,
-        max_score: selectedQuestion.max_marks,
-        overall_feedback: evalData.overallFeedback,
-        strengths: evalData.strengths,
-        improvements: evalData.improvements,
-        paragraph_analysis: evalData.paragraphAnalysis,
-        format_suggestions: evalData.formatSuggestions,
-        model_comparison: evalData.modelComparison,
-        evaluated_at: new Date().toISOString(),
-      });
+      setEvaluation(evalData as Evaluation);
+      publishCredits(evalData.creditsRemaining);
 
       // Record practice for streak tracking
       const streakResult = await recordPractice();
@@ -431,11 +399,16 @@ export default function WrittenPractice() {
       toast({ title: 'Evaluation complete!', description: 'Check your results below.' });
     } catch (error) {
       console.error('Evaluation error:', error);
-      toast({ 
-        title: 'Evaluation failed', 
-        description: error instanceof Error ? error.message : 'Please try again.',
-        variant: 'destructive' 
-      });
+      if (error instanceof EvaluationError && error.code === 'NO_CREDITS') {
+        setOutOfCredits(true);
+        publishCredits(0);
+      } else {
+        toast({
+          title: error instanceof EvaluationError && error.code === 'INSUFFICIENT_EVIDENCE' ? 'Not enough to evaluate' : 'Evaluation failed',
+          description: error instanceof Error ? error.message : 'Please try again.',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsEvaluating(false);
     }
@@ -1001,6 +974,8 @@ export default function WrittenPractice() {
                     </div>
                   )}
 
+                  {outOfCredits && <OutOfCreditsNotice />}
+
                   <Button 
                     onClick={handleSubmitAnswer} 
                     className="w-full" 
@@ -1065,6 +1040,7 @@ export default function WrittenPractice() {
                           </Button>
                           
                           {/* TTS Button */}
+                          {features.audioFeedback && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1087,8 +1063,10 @@ export default function WrittenPractice() {
                               <Volume2 className="h-4 w-4" />
                             )}
                           </Button>
+                          )}
                           
                           {/* Video Button */}
+                          {features.videoFeedback && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1103,6 +1081,7 @@ export default function WrittenPractice() {
                               <Video className="h-4 w-4" />
                             )}
                           </Button>
+                          )}
                         </div>
                       </CardTitle>
                     </CardHeader>
@@ -1163,6 +1142,8 @@ export default function WrittenPractice() {
                       </CardContent>
                     </Card>
                   )}
+
+                  {evaluation.breakdown && <ScoreBreakdownCard breakdown={evaluation.breakdown} />}
 
                   {/* Strengths & Improvements */}
                   <div className="grid md:grid-cols-2 gap-4">

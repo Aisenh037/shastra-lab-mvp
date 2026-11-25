@@ -1,0 +1,39 @@
+# Render Blueprint: the ShastraLab web app as a free static site.
+# Backend (database, auth, edge functions) lives in Supabase project shastralab.
+services:
+  - type: web
+    runtime: static
+    name: shastralab
+    # bun.lock points at a private registry, so install with npm from package.json.
+    buildCommand: npm install --no-audit --no-fund --legacy-peer-deps && npm run build
+    staticPublishPath: ./dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Publishable values only (safe in the browser; row-level security protects the data).
+      - key: VITE_SUPABASE_URL
+        value: https://xcrlxcyicagthchxasgx.supabase.co
+      - key: VITE_SUPABASE_PROJECT_ID
+        value: xcrlxcyicagthchxasgx
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhjcmx4Y3lpY2FndGhjaHhhc2d4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUzMjg4NjAsImV4cCI6MjExMDkwNDg2MH0.pnPijugd9SY5ub3Mh7gVhBUQd4HfBiUuJoYDPYU2LBA
+      # Razorpay payment links: set these in the Render dashboard when ready.
+      - key: VITE_PAYMENT_LINK_5
+        sync: false
+      - key: VITE_PAYMENT_LINK_10
+        sync: false
+      - key: VITE_PAYMENT_LINK_30
+        sync: false
+    routes:
+      # Single-page app: every path serves index.html so deep links and refreshes work.
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin

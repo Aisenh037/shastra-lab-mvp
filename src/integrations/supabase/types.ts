@@ -37,9 +37,11 @@ export type Database = {
       }
       answer_submissions: {
         Row: {
+          answer_image_paths: string[] | null
           answer_image_url: string | null
           answer_text: string | null
           created_at: string
+          engine_version: string | null
           evaluated_at: string | null
           format_suggestions: string | null
           id: string
@@ -50,15 +52,18 @@ export type Database = {
           paragraph_analysis: Json | null
           question_id: string | null
           score: number | null
+          score_breakdown: Json | null
           status: string
           strengths: Json | null
           submission_type: string
           user_id: string
         }
         Insert: {
+          answer_image_paths?: string[] | null
           answer_image_url?: string | null
           answer_text?: string | null
           created_at?: string
+          engine_version?: string | null
           evaluated_at?: string | null
           format_suggestions?: string | null
           id?: string
@@ -69,15 +74,18 @@ export type Database = {
           paragraph_analysis?: Json | null
           question_id?: string | null
           score?: number | null
+          score_breakdown?: Json | null
           status?: string
           strengths?: Json | null
           submission_type?: string
           user_id: string
         }
         Update: {
+          answer_image_paths?: string[] | null
           answer_image_url?: string | null
           answer_text?: string | null
           created_at?: string
+          engine_version?: string | null
           evaluated_at?: string | null
           format_suggestions?: string | null
           id?: string
@@ -88,6 +96,7 @@ export type Database = {
           paragraph_analysis?: Json | null
           question_id?: string | null
           score?: number | null
+          score_breakdown?: Json | null
           status?: string
           strengths?: Json | null
           submission_type?: string
@@ -98,6 +107,80 @@ export type Database = {
             foreignKeyName: "answer_submissions_question_id_fkey"
             columns: ["question_id"]
             isOneToOne: false
+            referencedRelation: "practice_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_ledger: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          delta: number
+          id: string
+          note: string | null
+          reason: string
+          reference: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          delta: number
+          id?: string
+          note?: string | null
+          reason: string
+          reference?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          delta?: number
+          id?: string
+          note?: string | null
+          reason?: string
+          reference?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      evaluation_credits: {
+        Row: { balance: number; updated_at: string; user_id: string }
+        Insert: { balance?: number; updated_at?: string; user_id: string }
+        Update: { balance?: number; updated_at?: string; user_id?: string }
+        Relationships: []
+      }
+      question_rubrics: {
+        Row: {
+          created_at: string
+          question_id: string
+          reviewed_by: string | null
+          rubric: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          question_id: string
+          reviewed_by?: string | null
+          rubric: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          question_id?: string
+          reviewed_by?: string | null
+          rubric?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_rubrics_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: true
             referencedRelation: "practice_questions"
             referencedColumns: ["id"]
           },
@@ -457,6 +540,11 @@ export type Database = {
           newly_unlocked: boolean
         }[]
       }
+      grant_credits: {
+        Args: { p_amount: number; p_email: string; p_note?: string; p_payment_id: string }
+        Returns: number
+      }
+      my_credit_balance: { Args: never; Returns: number }
       get_leaderboard: {
         Args: never
         Returns: {

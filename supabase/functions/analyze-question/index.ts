@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { chat } from "../_shared/llm.ts";
+import { requireSignedIn } from "../_shared/auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,21 +12,13 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const denied = await requireSignedIn(req);
+  if (denied) return denied;
+
   try {
     const { question, topics } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
+    const { content } = await chat({ messages: [
           {
             role: "system",
             content: `You are an expert exam analyst. Analyze the given question and:
@@ -38,18 +32,7 @@ Return ONLY valid JSON: {"topic": "string", "difficulty": "Easy|Medium|Hard", "i
             role: "user",
             content: `Available topics: ${topics.join(', ')}\n\nQuestion: ${question}`
           }
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error("AI gateway error");
-    }
-
-    const data = await response.json();
-    const content = data.choices[0].message.content;
+        ] });
     
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     const analysis = jsonMatch ? JSON.parse(jsonMatch[0]) : { topic: null, difficulty: null, importance_explanation: null };

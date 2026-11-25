@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { evaluateAnswer, EvaluationError } from '@/lib/evaluation';
+import { publishCredits } from '@/hooks/useCredits';
 import { useCountdownTimer } from '@/hooks/useCountdownTimer';
 import AppLayout from '@/components/layouts/AppLayout';
 import { MockTestTimer } from '@/components/MockTestTimer';
@@ -240,6 +242,7 @@ export default function MockTest() {
       let totalScore = 0;
       const maxScore = questions.reduce((sum, q) => sum + q.max_marks, 0);
       const questionResults: TestResult['questionResults'] = [];
+      let outOfCredits = false;
 
       // Evaluate each answer
       for (const question of questions) {
@@ -255,21 +258,24 @@ export default function MockTest() {
           continue;
         }
 
-        try {
-          const { data: evalData, error } = await supabase.functions.invoke('evaluate-answer', {
-            body: {
-              questionText: question.question_text,
-              questionType: question.question_type,
-              maxMarks: question.max_marks,
-              wordLimit: question.word_limit,
-              modelAnswer: question.model_answer,
-              studentAnswer: answer,
-              subject: question.subject,
-              topic: question.topic,
-            },
+        if (outOfCredits) {
+          questionResults.push({
+            questionId: question.id,
+            score: 0,
+            maxMarks: question.max_marks,
+            feedback: 'Not evaluated: no evaluations left. Buy a pack and resubmit this answer from Written Practice.',
           });
+          continue;
+        }
 
-          if (error) throw error;
+        try {
+          // The server scores and saves the submission; one credit per answer.
+          const evalData = await evaluateAnswer({
+            questionId: question.id,
+            answerText: answer,
+            submissionType: 'typed',
+          });
+          publishCredits(evalData.creditsRemaining);
 
           totalScore += evalData.score;
           questionResults.push({
@@ -278,31 +284,17 @@ export default function MockTest() {
             maxMarks: question.max_marks,
             feedback: evalData.overallFeedback,
           });
-
-          // Save submission
-          await supabase.from('answer_submissions').insert({
-            user_id: user.id,
-            question_id: question.id,
-            answer_text: answer,
-            submission_type: 'typed',
-            status: 'evaluated',
-            score: evalData.score,
-            max_score: question.max_marks,
-            overall_feedback: evalData.overallFeedback,
-            strengths: evalData.strengths,
-            improvements: evalData.improvements,
-            paragraph_analysis: evalData.paragraphAnalysis,
-            format_suggestions: evalData.formatSuggestions,
-            model_comparison: evalData.modelComparison,
-            evaluated_at: new Date().toISOString(),
-          });
         } catch (error) {
           console.error('Evaluation error for question:', question.id, error);
+          if (error instanceof EvaluationError && error.code === 'NO_CREDITS') outOfCredits = true;
           questionResults.push({
             questionId: question.id,
             score: 0,
             maxMarks: question.max_marks,
-            feedback: 'Evaluation failed. Please retry.',
+            feedback:
+              error instanceof EvaluationError && (error.code === 'NO_CREDITS' || error.code === 'INSUFFICIENT_EVIDENCE')
+                ? error.message
+                : 'Evaluation failed. Please retry.',
           });
         }
       }

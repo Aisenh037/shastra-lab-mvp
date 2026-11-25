@@ -1,0 +1,50 @@
+{
+  "match": { "questionText": "Discuss the challenges faced by MSMEs in India and the government initiatives to address them." },
+  "status": "draft",
+  "reviewedBy": null,
+  "rubric": {
+    "version": 1,
+    "directive": "discuss",
+    "paper": "GS3",
+    "maxMarks": 15,
+    "wordLimit": 250,
+    "source": "draft",
+    "dimensions": [
+      {
+        "id": "context",
+        "label": "Context",
+        "points": [
+          { "id": "ctx-1", "text": "States the significance of MSMEs: share of GDP, exports or employment", "mustHave": true }
+        ]
+      },
+      {
+        "id": "economic",
+        "label": "Economic",
+        "points": [
+          { "id": "eco-1", "text": "Limited access to formal, affordable credit (collateral requirements, credit gap)", "mustHave": true },
+          { "id": "eco-2", "text": "Delayed payments from large buyers and government strain working capital", "mustHave": true },
+          { "id": "eco-3", "text": "Technology and skill gaps limit productivity and competitiveness", "mustHave": false },
+          { "id": "eco-4", "text": "Large informal segment outside formal registration, tax and credit systems", "mustHave": false },
+          { "id": "eco-5", "text": "Market access, branding or export competitiveness constraints", "mustHave": false }
+        ]
+      },
+      {
+        "id": "policy",
+        "label": "Policy",
+        "points": [
+          { "id": "pol-1", "text": "Credit support schemes such as MUDRA loans or the credit guarantee scheme (CGTMSE / ECLGS)", "mustHave": true },
+          { "id": "pol-2", "text": "Payment-delay remedies such as TReDS or the MSME Samadhaan portal", "mustHave": false },
+          { "id": "pol-3", "text": "Formalisation through Udyam registration or the revised MSME definition", "mustHave": false },
+          { "id": "pol-4", "text": "Market access through the GeM portal or public procurement policy", "mustHave": false }
+        ]
+      },
+      {
+        "id": "way-forward",
+        "label": "Way forward",
+        "points": [
+          { "id": "wf-1", "text": "Concrete way forward, e.g. cash-flow based lending, cluster development, enforcing payment timelines", "mustHave": true }
+        ]
+      }
+    ]
+  }
+}

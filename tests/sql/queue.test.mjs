@@ -1,0 +1,28 @@
+import { check, done, freshDb, throws } from "./harness.mjs";
+
+const { q } = await freshDb();
+const u = (await q(`insert into auth.users(email) values ('a@x.in') returning id`))[0].id;
+const mk = (status, extra="") => q(`insert into answer_submissions(user_id,status,attempts${extra?','+extra.split('=')[0]:''}) values ('${u}','${status}',0${extra?','+extra.split('=')[1]:''}) returning id`).then(r=>r[0].id);
+const a = await mk("queued");
+const b = await mk("queued", "next_attempt_at=now()+interval '1 hour'");
+const c = await mk("processing", "locked_until=now()-interval '1 second'");
+const d = await mk("processing", "locked_until=now()+interval '1 minute'");
+const e = await mk("evaluated");
+const f = await mk("failed");
+let got = await q(`select id, status, attempts, locked_until > now() as locked from claim_evaluation_jobs(10, 180)`);
+const ids = got.map(r=>r.id).sort();
+check("claims due queued + expired-lock jobs only", JSON.stringify(ids)===JSON.stringify([a,c].sort()), got);
+check("claimed jobs are processing, attempt counted, locked", got.every(r=>r.status==="processing" && r.attempts===1 && r.locked), got);
+got = await q(`select id from claim_evaluation_jobs(10, 180)`);
+check("claiming again returns nothing (fresh locks respected)", got.length===0, got);
+await q(`update answer_submissions set next_attempt_at = now() - interval '1 second' where id='${b}'`);
+const g = await mk("queued");
+got = await q(`select id from claim_evaluation_jobs(10, 180, '${g}')`);
+check("p_id claims only that job", got.length===1 && got[0].id===g, got);
+got = await q(`select id from claim_evaluation_jobs(1, 180)`);
+check("limit respected", got.length===1 && got[0].id===b, got);
+const stats = await q(`select status, jobs::int from evaluation_queue_stats order by status`);
+check("queue stats view", JSON.stringify(stats)===JSON.stringify([{status:"failed",jobs:1},{status:"processing",jobs:5}]), stats);
+const grants = await q(`select grantee from information_schema.routine_privileges where routine_name='claim_evaluation_jobs' and grantee<>'postgres'`);
+check("claim function executable by service_role only", grants.map(x=>x.grantee).join()==="service_role", grants);
+done();

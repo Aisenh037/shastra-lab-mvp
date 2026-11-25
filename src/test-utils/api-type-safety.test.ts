@@ -60,7 +60,7 @@ describe('API Response Type Safety Properties', () => {
             })
           ),
           status: fc.constantFrom('loading', 'success', 'error'),
-          timestamp: fc.option(fc.date().map(d => d.toISOString()))
+          timestamp: fc.option(fc.date({ noInvalidDate: true }).map(d => d.toISOString()))
         }),
         (apiResponse) => {
           // Property: API responses should have consistent structure
@@ -143,7 +143,7 @@ describe('API Response Type Safety Properties', () => {
             // Missing required fields
             id: fc.uuid(),
             // email missing
-            createdAt: fc.date().map(d => d.toISOString())
+            createdAt: fc.date({ noInvalidDate: true }).map(d => d.toISOString())
           }),
           fc.record({
             // Invalid field types
@@ -363,7 +363,7 @@ describe('API Response Type Safety Properties', () => {
             fc.array(fc.record({
               id: fc.uuid(),
               email: fc.emailAddress(),
-              createdAt: fc.date().map(d => d.toISOString())
+              createdAt: fc.date({ noInvalidDate: true }).map(d => d.toISOString())
             }))
           ),
           error: fc.oneof(

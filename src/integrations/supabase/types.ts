@@ -581,7 +581,7 @@ export type Database = {
         Returns: undefined
       }
       check_achievements: {
-        Args: { p_user_id: string }
+        Args: Record<PropertyKey, never>
         Returns: {
           achievement_key: string
           newly_unlocked: boolean
@@ -605,21 +605,21 @@ export type Database = {
         }[]
       }
       get_user_achievements: {
-        Args: { p_user_id: string }
+        Args: Record<PropertyKey, never>
         Returns: {
           achievement_key: string
           unlocked_at: string
         }[]
       }
       get_user_rank: {
-        Args: { p_user_id: string }
+        Args: Record<PropertyKey, never>
         Returns: {
           rank: number
           total_users: number
         }[]
       }
       get_user_streak: {
-        Args: { p_user_id: string }
+        Args: Record<PropertyKey, never>
         Returns: {
           current_streak: number
           freeze_count: number
@@ -637,7 +637,7 @@ export type Database = {
         Returns: boolean
       }
       recover_streak: {
-        Args: { p_days_to_recover?: number; p_user_id: string }
+        Args: { p_days_to_recover?: number }
         Returns: {
           freezes_remaining: number
           freezes_used: number
@@ -647,7 +647,7 @@ export type Database = {
         }[]
       }
       update_practice_streak: {
-        Args: { p_user_id: string }
+        Args: Record<PropertyKey, never>
         Returns: {
           current_streak: number
           longest_streak: number

@@ -20,9 +20,7 @@ export function useAchievements() {
     }
 
     try {
-      const { data, error } = await supabase.rpc('get_user_achievements', {
-        p_user_id: user.id,
-      });
+      const { data, error } = await supabase.rpc('get_user_achievements' as any);
 
       if (error) throw error;
       setAchievements(data || []);
@@ -37,9 +35,7 @@ export function useAchievements() {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase.rpc('check_achievements', {
-        p_user_id: user.id,
-      });
+      const { data, error } = await supabase.rpc('check_achievements' as any);
 
       if (error) throw error;
       

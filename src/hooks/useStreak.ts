@@ -38,9 +38,7 @@ export function useStreak() {
     }
 
     try {
-      const { data, error } = await supabase.rpc('get_user_streak' as any, {
-        p_user_id: user.id,
-      });
+      const { data, error } = await supabase.rpc('get_user_streak' as any);
 
       if (error) throw error;
       
@@ -66,9 +64,7 @@ export function useStreak() {
     if (!user) return null;
 
     try {
-      const { data, error } = await supabase.rpc('update_practice_streak', {
-        p_user_id: user.id,
-      });
+      const { data, error } = await supabase.rpc('update_practice_streak' as any);
 
       if (error) throw error;
       
@@ -164,7 +160,6 @@ export function useStreak() {
 
     try {
       const { data, error } = await supabase.rpc('recover_streak' as any, {
-        p_user_id: user.id,
         p_days_to_recover: daysToRecover,
       });
 

@@ -91,9 +91,7 @@ export default function Leaderboard() {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase.rpc('get_user_rank', { 
-        p_user_id: user.id 
-      });
+      const { data, error } = await supabase.rpc('get_user_rank' as any);
       
       if (error) throw error;
       

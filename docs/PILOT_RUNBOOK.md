@@ -58,15 +58,48 @@ select u.email, o.pages from ocr_usage o join auth.users u on u.id = o.user_id
 where o.day = ocr_today() order by o.pages desc limit 20;
 ```
 
-## Daily: grant credits after a payment
+## Payments (Razorpay Orders, automatic)
 
-Razorpay → Payments → copy the payment id and the email the buyer entered. In the SQL editor:
+Students pick a pack in the app → Razorpay Checkout (UPI, card, netbanking) → credits land instantly.
+The price comes from `credit_packs`, never from the browser. Every order is credited exactly once:
+the browser confirms it (`verify-payment`) and Razorpay's webhook confirms it too, in case the tab closed.
+
+**Switch on (test mode first):**
+1. Razorpay Dashboard → *Test mode* → Account & Settings → API Keys → generate. In Supabase → Edge Functions → Secrets add
+   `RAZORPAY_KEY_ID` (`rzp_test_…`) and `RAZORPAY_KEY_SECRET`.
+2. Dashboard → Webhooks → Add: URL `https://xcrlxcyicagthchxasgx.supabase.co/functions/v1/razorpay-webhook`,
+   choose a long random secret, events **payment.captured, order.paid, payment.failed, refund.processed**.
+   Add the same secret as `RAZORPAY_WEBHOOK_SECRET`.
+3. Buy a pack on the site with test card 4111 1111 1111 1111 (any future date, any CVV) or UPI `success@razorpay`.
+4. Going live: complete KYC, switch to *Live mode*, generate live keys + a live webhook, replace the three secrets.
+
+Until the keys are set, the buy dialog falls back to the old payment links (`VITE_PAYMENT_LINK_*`).
+
+**Prices:** `update credit_packs set price_paise = 14900 where id = 'standard';` (paise; ₹149). Hide a pack with `active = false`.
+
+**Refunds:** refund in the Razorpay dashboard. The webhook takes back the matching share of credits
+(all of them for a full refund), but never credits already used.
+
+**Checks:**
+
+```sql
+-- today's sales
+select pack_id, count(*), sum(amount_paise)/100 as rupees from payment_orders
+where status = 'paid' and paid_at > now() - interval '1 day' group by 1;
+-- anything Razorpay sent that we did not credit (should be empty)
+select received_at, event, order_id, outcome from payment_events
+where outcome in ('amount_mismatch', 'unknown_order') order by received_at desc;
+-- paid at Razorpay but unpaid here: compare with Dashboard → Payments
+select * from payment_orders where status = 'created' and created_at < now() - interval '1 hour';
+```
+
+**Manual credit** (goodwill, or a payment link from before Orders):
 
 ```sql
 select grant_credits('aspirant@example.com', 10, 'pay_XXXXXXXX', '₹199 pack');
 ```
 
-Re-running with the same payment id does nothing, so a double paste can't double-credit. Check a user's history with `select * from credit_ledger where user_id = (select id from auth.users where email = '...') order by created_at desc;`
+Re-running with the same payment id does nothing. History: `select * from credit_ledger where user_id = (select id from auth.users where email = '...') order by created_at desc;`
 
 ## Calibration (before launch, then weekly)
 

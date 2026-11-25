@@ -166,6 +166,28 @@ export type Database = {
         Update: { balance?: number; updated_at?: string; user_id?: string }
         Relationships: []
       }
+      credit_packs: {
+        Row: { id: string; credits: number; price_paise: number; active: boolean; sort: number }
+        Insert: { id: string; credits: number; price_paise: number; active?: boolean; sort?: number }
+        Update: { id?: string; credits?: number; price_paise?: number; active?: boolean; sort?: number }
+        Relationships: []
+      }
+      payment_orders: {
+        Row: {
+          id: string; user_id: string; pack_id: string; credits: number; amount_paise: number; currency: string
+          status: string; payment_id: string | null; paid_via: string | null; refunded_credits: number
+          created_at: string; paid_at: string | null
+        }
+        Insert: { id: string; user_id: string; pack_id: string; credits: number; amount_paise: number; currency?: string; status?: string }
+        Update: { status?: string; payment_id?: string | null; paid_at?: string | null }
+        Relationships: []
+      }
+      ocr_usage: {
+        Row: { user_id: string; day: string; pages: number; updated_at: string }
+        Insert: { user_id: string; day: string; pages?: number }
+        Update: { pages?: number }
+        Relationships: []
+      }
       question_rubrics: {
         Row: {
           created_at: string

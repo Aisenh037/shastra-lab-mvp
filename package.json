@@ -18,7 +18,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:all": "npm run test:run && npm run test:e2e",
     "test:engine": "vitest run tests/engine",
-    "test:edge": "cd tests/deno && deno run --no-lock --no-config --import-map import_map.json -A evaluate-answer.e2e.ts && deno run --no-lock --no-config --import-map import_map.json -A ocr.e2e.ts",
+    "test:edge": "cd tests/deno && deno run --no-lock --no-config --import-map import_map.json -A evaluate-answer.e2e.ts && deno run --no-lock --no-config --import-map import_map.json -A ocr.e2e.ts && deno run --no-lock --no-config --import-map import_map.json -A payments.e2e.ts",
     "rubrics:validate": "node scripts/rubrics.ts validate",
     "rubrics:sql": "node scripts/rubrics.ts sql",
     "calibrate": "node scripts/calibrate.ts"

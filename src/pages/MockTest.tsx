@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { evaluateAnswer, EvaluationError } from '@/lib/evaluation';
+import { submitAnswer, waitForEvaluation, EvaluationError } from '@/lib/evaluation';
 import { publishCredits } from '@/hooks/useCredits';
 import { useCountdownTimer } from '@/hooks/useCountdownTimer';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -239,65 +239,59 @@ export default function MockTest() {
     setTestState('submitted');
 
     try {
-      let totalScore = 0;
       const maxScore = questions.reduce((sum, q) => sum + q.max_marks, 0);
-      const questionResults: TestResult['questionResults'] = [];
+      type Slot = { questionId: string; maxMarks: number; feedback?: string; submissionId?: string };
+      const slots: Slot[] = [];
       let outOfCredits = false;
 
-      // Evaluate each answer
+      // 1. Queue every answer (fast: the server only saves the job and charges a credit).
       for (const question of questions) {
         const answer = answers[question.id] || '';
-        
+        const slot: Slot = { questionId: question.id, maxMarks: question.max_marks };
+        slots.push(slot);
+
         if (!answer.trim()) {
-          questionResults.push({
-            questionId: question.id,
-            score: 0,
-            maxMarks: question.max_marks,
-            feedback: 'No answer provided.',
-          });
+          slot.feedback = 'No answer provided.';
           continue;
         }
-
         if (outOfCredits) {
-          questionResults.push({
-            questionId: question.id,
-            score: 0,
-            maxMarks: question.max_marks,
-            feedback: 'Not evaluated: no evaluations left. Buy a pack and resubmit this answer from Written Practice.',
-          });
+          slot.feedback = 'Not evaluated: no evaluations left. Buy a pack and resubmit this answer from Written Practice.';
           continue;
         }
-
         try {
-          // The server scores and saves the submission; one credit per answer.
-          const evalData = await evaluateAnswer({
-            questionId: question.id,
-            answerText: answer,
-            submissionType: 'typed',
-          });
-          publishCredits(evalData.creditsRemaining);
-
-          totalScore += evalData.score;
-          questionResults.push({
-            questionId: question.id,
-            score: evalData.score,
-            maxMarks: question.max_marks,
-            feedback: evalData.overallFeedback,
-          });
+          const queued = await submitAnswer({ questionId: question.id, answerText: answer, submissionType: 'typed' });
+          publishCredits(queued.creditsRemaining);
+          slot.submissionId = queued.submissionId;
         } catch (error) {
-          console.error('Evaluation error for question:', question.id, error);
+          console.error('Submit error for question:', question.id, error);
           if (error instanceof EvaluationError && error.code === 'NO_CREDITS') outOfCredits = true;
-          questionResults.push({
-            questionId: question.id,
-            score: 0,
-            maxMarks: question.max_marks,
-            feedback:
-              error instanceof EvaluationError && (error.code === 'NO_CREDITS' || error.code === 'INSUFFICIENT_EVIDENCE')
-                ? error.message
-                : 'Evaluation failed. Please retry.',
-          });
+          slot.feedback =
+            error instanceof EvaluationError && (error.code === 'NO_CREDITS' || error.code === 'INSUFFICIENT_EVIDENCE')
+              ? error.message
+              : 'Evaluation failed. Please retry.';
         }
       }
+
+      // 2. Wait for all results in parallel.
+      const results = await Promise.allSettled(
+        slots.map((slot) => (slot.submissionId ? waitForEvaluation(slot.submissionId) : Promise.resolve(null))),
+      );
+
+      let totalScore = 0;
+      const questionResults: TestResult['questionResults'] = slots.map((slot, i) => {
+        const r = results[i];
+        if (r.status === 'fulfilled' && r.value) {
+          totalScore += r.value.score;
+          return { questionId: slot.questionId, score: r.value.score, maxMarks: slot.maxMarks, feedback: r.value.overallFeedback };
+        }
+        const reason = r.status === 'rejected' ? r.reason : null;
+        return {
+          questionId: slot.questionId,
+          score: 0,
+          maxMarks: slot.maxMarks,
+          feedback: slot.feedback ?? (reason instanceof EvaluationError ? reason.message : 'Evaluation failed. Please retry.'),
+        };
+      });
 
       const percentage = Math.round((totalScore / maxScore) * 100);
       setTestResult({ totalScore, maxScore, percentage, questionResults });

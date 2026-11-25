@@ -48,7 +48,7 @@ password_requirements = "letters_digits"
 enable_signup = true
 
 [auth.email]
-enable_signup = true
+enabled = true
 enable_confirmations = true
 double_confirm_changes = true
 max_frequency = "60s"

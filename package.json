@@ -21,7 +21,11 @@
     "test:edge": "cd tests/deno && deno run --no-lock --no-config --import-map import_map.json -A evaluate-answer.e2e.ts && deno run --no-lock --no-config --import-map import_map.json -A ocr.e2e.ts && deno run --no-lock --no-config --import-map import_map.json -A payments.e2e.ts && deno run --no-lock --no-config --import-map import_map.json -A privacy.e2e.ts",
     "rubrics:validate": "node scripts/rubrics.ts validate",
     "rubrics:sql": "node scripts/rubrics.ts sql",
-    "calibrate": "node scripts/calibrate.ts"
+    "calibrate": "node scripts/calibrate.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "test:ci": "vitest run --config vitest.ci.config.ts",
+    "test:sql": "node tests/sql/run.mjs",
+    "verify": "npm run typecheck && npm run test:ci && npm run test:sql && npm run test:edge && npm run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -78,6 +82,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.17",
     "@eslint/js": "^9.32.0",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/typography": "^0.5.16",

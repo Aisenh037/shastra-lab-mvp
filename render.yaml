@@ -7,7 +7,11 @@ services:
     # bun.lock points at a private registry, so install with npm from package.json.
     buildCommand: npm install --no-audit --no-fund --legacy-peer-deps && npm run build
     staticPublishPath: ./dist
-    pullRequestPreviewsEnabled: false
+    branch: main
+    # Deploy only after the GitHub CI checks on the commit pass (.github/workflows/ci.yml).
+    autoDeployTrigger: checksPass
+    previews:
+      generation: off
     envVars:
       - key: NODE_VERSION
         value: "22"

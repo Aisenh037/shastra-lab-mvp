@@ -44,6 +44,39 @@ The scheduler needs three Vault secrets per environment: `project_url`, `anon_ke
 
 Old submissions keep working. Photos uploaded before the change were saved as public URLs; they stop loading once the bucket is private, which is intended.
 
+## CI/CD
+
+`.github/workflows/ci.yml` runs on every pull request and every push to `main`:
+
+| Job | What it checks |
+|---|---|
+| App | typecheck, app tests (`npm run test:ci`), database tests on PGlite (`npm run test:sql`), rubric files, production build |
+| Edge functions | Deno end-to-end tests for evaluation, OCR, payments and privacy; type-check of every deployed function |
+| Migrations plan | (PRs) which migrations would be applied to production, as a dry run |
+| Deploy | (push to `main`, after both checks pass) `supabase db push`, then deploy the 12 live edge functions |
+
+Render deploys the web app from `main` only after these checks pass (`autoDeployTrigger: checksPass` in `render.yaml`).
+
+Run everything locally before pushing: `npm run verify` (needs Deno 2 for the edge tests).
+
+**One-time setup:** GitHub repo → Settings → Secrets and variables → Actions → *New repository secret*:
+- `SUPABASE_ACCESS_TOKEN`: supabase.com → Account → Access Tokens → *Generate new token*.
+- `SUPABASE_DB_URL`: Supabase dashboard → *Connect* → **Session pooler** → copy the URI and put your database
+  password in it (Project Settings → Database → *Reset database password* if you don't know it). The direct
+  address is IPv6-only, which GitHub's runners can't reach.
+
+Without these, the checks still run and the deploy job is skipped with a warning.
+
+**Protect main:** Settings → Branches → Add rule for `main` → *Require status checks to pass*: select
+**App (typecheck, tests, build)** and **Edge functions (Deno end-to-end)**.
+
+**Quarantined tests:** 13 older test files were already failing before the pilot work; they're listed in
+`vitest.ci.config.ts` and skipped in CI. Fix one, remove it from the list, and CI starts enforcing it.
+
+**Changing the database:** add a new file `supabase/migrations/<YYYYMMDDHHMMSS>_<name>.sql` (never edit one
+that's already applied), add a test in `tests/sql/`, open a PR. The *Migrations plan* job shows it; merging
+applies it.
+
 ## Sign-in, email and password reset
 
 The app has email + password sign-up with confirmation, **Forgot password** (`/reset-password`),

@@ -1,0 +1,136 @@
+# CI/CD for ShastraLab.
+#
+# Every pull request and push to main: typecheck, app tests, database tests,
+# edge-function tests, rubric validation and a production build.
+# Push to main, after all checks pass: apply new database migrations and
+# deploy the edge functions to Supabase. Render deploys the web app on its own
+# once these checks pass (render.yaml: autoDeployTrigger: checksPass).
+#
+# Repository secrets (Settings -> Secrets and variables -> Actions), used only
+# by the deploy jobs:
+#   SUPABASE_ACCESS_TOKEN  personal access token (supabase.com/dashboard/account/tokens)
+#   SUPABASE_DB_URL        Session pooler connection string, password included
+#                          (Dashboard -> Connect -> Session pooler). GitHub runners
+#                          can't reach the direct IPv6 address.
+# Without them the deploy jobs are skipped and the checks still run.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  SUPABASE_PROJECT_REF: xcrlxcyicagthchxasgx
+  SUPABASE_CLI_VERSION: 3.4.0
+  # Edge functions the app uses. tts-feedback and generate-video-feedback are
+  # behind feature flags that are off, so they are not deployed.
+  EDGE_FUNCTIONS: >-
+    analyze-question extract-questions ocr-pdf ocr-handwriting
+    evaluate-answer evaluation-worker send-progress-report
+    create-order verify-payment razorpay-webhook
+    export-my-data delete-account
+
+jobs:
+  app:
+    name: App (typecheck, tests, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Same install as Render (bun.lock points at a private registry).
+      - run: npm install --no-audit --no-fund --legacy-peer-deps
+      - run: npm run typecheck
+      - name: App tests (quarantined legacy files listed in vitest.ci.config.ts)
+        run: npm run test:ci
+      - name: Database tests (all migrations + SQL functions on PGlite)
+        run: npm run test:sql
+      - name: Rubric files are valid
+        run: npm run rubrics:validate
+      - name: Production build
+        run: npm run build
+
+  edge:
+    name: Edge functions (Deno end-to-end)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: evaluate-answer + evaluation-worker
+        working-directory: tests/deno
+        run: deno run --no-lock --no-config --import-map import_map.json -A evaluate-answer.e2e.ts
+      - name: OCR quota
+        working-directory: tests/deno
+        run: deno run --no-lock --no-config --import-map import_map.json -A ocr.e2e.ts
+      - name: Payments (Razorpay)
+        working-directory: tests/deno
+        run: deno run --no-lock --no-config --import-map import_map.json -A payments.e2e.ts
+      - name: Privacy (export, delete, AI no-training)
+        working-directory: tests/deno
+        run: deno run --no-lock --no-config --import-map import_map.json -A privacy.e2e.ts
+      - name: Functions type-check
+        run: deno check --no-lock --no-config --import-map tests/deno/import_map.json $(for f in $EDGE_FUNCTIONS; do echo supabase/functions/$f/index.ts; done)
+
+  # Shows which migrations a PR would apply. Skipped for forks and without secrets.
+  migrations-plan:
+    name: Migrations plan (dry run)
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Dry run against production
+        if: env.SUPABASE_DB_URL != ''
+        run: supabase db push --remote="$SUPABASE_DB_URL" --dry-run
+      - name: Secrets not configured
+        if: env.SUPABASE_DB_URL == ''
+        run: echo "::notice::SUPABASE_DB_URL not set; skipping the migration dry run."
+
+  deploy:
+    name: Deploy to Supabase
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [app, edge]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Secrets not configured
+        if: env.SUPABASE_ACCESS_TOKEN == '' || env.SUPABASE_DB_URL == ''
+        run: echo "::warning::SUPABASE_ACCESS_TOKEN or SUPABASE_DB_URL not set; nothing was deployed."
+      # Migrations first, so functions never run against an older schema.
+      - name: Apply new migrations
+        if: env.SUPABASE_DB_URL != ''
+        run: supabase db push --remote="$SUPABASE_DB_URL" --yes
+      - name: Deploy edge functions
+        if: env.SUPABASE_ACCESS_TOKEN != ''
+        run: supabase functions deploy $EDGE_FUNCTIONS --remote="$SUPABASE_PROJECT_REF" --use-api --yes

@@ -1,3 +1,4 @@
+import { LegalFooter } from '@/components/legal/LegalFooter';
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -227,8 +228,11 @@ export default function Index() {
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
           <ShastraLabLogo size="sm" />
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} ShastraLab. Engineering exam-ready answers.
+            © {new Date().getFullYear()} ShastraLab. Not affiliated with UPSC.
           </p>
+        </div>
+        <div className="container mx-auto px-4 mt-4 flex justify-center md:justify-end">
+          <LegalFooter compact />
         </div>
       </footer>
     </div>

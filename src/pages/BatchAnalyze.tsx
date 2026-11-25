@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
+import { OcrError, readScannedPages } from '@/lib/ocr';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Upload, FileText, Loader2, X, Check, AlertCircle, Files, Play, Trash2 } from 'lucide-react';
@@ -152,15 +153,14 @@ export default function BatchAnalyze() {
           
           if (isImageBased) {
             const images = await convertPdfPagesToImages(pdf);
-            const ocrResponse = await supabase.functions.invoke('ocr-pdf', {
-              body: { images },
-            });
-            if (ocrResponse.error) throw ocrResponse.error;
-            rawText = ocrResponse.data.text;
+            rawText = await readScannedPages(images, ({ done, total }) =>
+              updateFileStatus(queuedFile.id, { progress: 10 + Math.round((done / total) * 20) }),
+            );
           } else {
             rawText = text;
           }
         } catch (err) {
+          if (err instanceof OcrError) throw err;
           throw new Error('Failed to extract text from PDF');
         }
 

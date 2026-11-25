@@ -44,6 +44,20 @@ The scheduler needs three Vault secrets per environment: `project_url`, `anon_ke
 
 Old submissions keep working. Photos uploaded before the change were saved as public URLs; they stop loading once the bucket is private, which is intended.
 
+## Photo and scanned-PDF reading limits
+
+Reading photos and scanned pages costs AI quota but no credit, so each user gets
+`OCR_DAILY_PAGE_LIMIT` reads per day (default 40, resets at midnight India time; admins exempt).
+A page that fails to read is given back. The app sends a scanned PDF one page per request,
+so long PDFs never time out; if the limit runs out midway, the pages already read are kept.
+
+See today's heaviest users:
+
+```sql
+select u.email, o.pages from ocr_usage o join auth.users u on u.id = o.user_id
+where o.day = ocr_today() order by o.pages desc limit 20;
+```
+
 ## Daily: grant credits after a payment
 
 Razorpay → Payments → copy the payment id and the email the buyer entered. In the SQL editor:

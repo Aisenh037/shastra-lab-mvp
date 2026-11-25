@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useStreak } from '@/hooks/useStreak';
 import { useAchievements } from '@/hooks/useAchievements';
 import { supabase } from '@/integrations/supabase/client';
+import { downscaleImage, OcrError, readHandwriting } from '@/lib/ocr';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -277,7 +278,7 @@ export default function WrittenPractice() {
         reader.onloadend = () => resolve(reader.result as string);
         reader.readAsDataURL(file);
       });
-      newPreviews.push(preview);
+      newPreviews.push(await downscaleImage(preview).catch(() => preview));
     }
     
     const allPreviews = [...answerImagePreviews, ...newPreviews];
@@ -293,14 +294,9 @@ export default function WrittenPractice() {
       for (let i = 0; i < allPreviews.length; i++) {
         setOcrProgress({ current: i + 1, total: allPreviews.length });
         
-        const { data, error } = await supabase.functions.invoke('ocr-handwriting', {
-          body: { imageData: allPreviews[i] },
-        });
-        
-        if (error) throw error;
-        
-        if (data?.text) {
-          combinedText += `--- Page ${i + 1} ---\n${data.text}\n\n`;
+        const text = await readHandwriting(allPreviews[i]);
+        if (text) {
+          combinedText += `--- Page ${i + 1} ---\n${text}\n\n`;
         }
       }
       
@@ -315,8 +311,8 @@ export default function WrittenPractice() {
     } catch (error) {
       console.error('OCR error:', error);
       toast({ 
-        title: 'OCR failed', 
-        description: 'Could not extract text. You can type it manually.',
+        title: error instanceof OcrError && error.code === 'OCR_QUOTA' ? 'Daily photo limit reached' : 'OCR failed', 
+        description: error instanceof OcrError && error.code !== 'UNKNOWN' ? error.message : 'Could not extract text. You can type it manually.',
         variant: 'destructive' 
       });
     } finally {

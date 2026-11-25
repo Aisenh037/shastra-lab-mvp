@@ -1,55 +1,58 @@
+// Read pages of a scanned PDF (rendered to images by the browser).
+//
+// At most MAX_PAGES_PER_REQUEST pages per call so each request finishes well
+// inside the edge function time limit; the app sends a long PDF page by page.
+// Each page counts against the user's daily OCR quota; pages that fail to read
+// are given back.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { requireSignedIn } from "../_shared/auth.ts";
+import { corsHeaders, json, requireUser } from "../_shared/auth.ts";
 import { ocrMode, transcribeImage } from "../_shared/ocr.ts";
+import { MAX_IMAGE_CHARS, quotaMessage, reservePages } from "../_shared/ocr-quota.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-const MAX_PAGES = 40;
+export const MAX_PAGES_PER_REQUEST = 2;
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders(req) });
+  if (req.method !== "POST") return json(req, { error: "Method not allowed" }, 405);
 
-  const denied = await requireSignedIn(req);
-  if (denied) return denied;
+  const ctx = await requireUser(req);
+  if (ctx instanceof Response) return ctx;
 
+  let images: unknown;
   try {
-    const { images } = await req.json();
-    if (!Array.isArray(images) || images.length === 0) {
-      throw new Error("Images array is required");
-    }
-    if (images.length > MAX_PAGES) {
-      throw new Error(`At most ${MAX_PAGES} pages per upload`);
-    }
-
-    console.log(`Reading ${images.length} pages (${ocrMode()})`);
-
-    const textParts: string[] = [];
-    for (let i = 0; i < images.length; i++) {
-      try {
-        const pageText = await transcribeImage(images[i]);
-        if (pageText) textParts.push(`--- Page ${i + 1} ---\n${pageText}`);
-      } catch (pageError) {
-        console.error(`Error processing page ${i + 1}:`, pageError);
-        textParts.push(`--- Page ${i + 1} ---\n[Error extracting text from this page]`);
-      }
-    }
-
-    const text = textParts.join("\n\n");
-    console.log("OCR complete, extracted", text.length, "characters");
-
-    return new Response(JSON.stringify({ text }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    console.error("Error in ocr-pdf:", error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    ({ images } = await req.json());
+  } catch {
+    return json(req, { error: "Invalid JSON body" }, 400);
   }
+  if (!Array.isArray(images) || images.length === 0 || images.some((i) => typeof i !== "string" || !i)) {
+    return json(req, { error: "images must be a non-empty array of image data" }, 400);
+  }
+  if (images.length > MAX_PAGES_PER_REQUEST) {
+    return json(req, { error: `Send at most ${MAX_PAGES_PER_REQUEST} pages per request.`, code: "TOO_MANY_PAGES" }, 400);
+  }
+  if (images.some((i: string) => i.length > MAX_IMAGE_CHARS)) {
+    return json(req, { error: "A page image is too large.", code: "IMAGE_TOO_LARGE" }, 413);
+  }
+
+  const quota = await reservePages(ctx.adminClient, ctx.user.id, images.length);
+  if (!quota.ok) return json(req, { error: quotaMessage(quota.limit), code: "OCR_QUOTA", limit: quota.limit }, 429);
+
+  console.log(`Reading ${images.length} page(s) (${ocrMode()})`);
+  const pages: string[] = [];
+  let failed = 0;
+  for (const image of images as string[]) {
+    try {
+      pages.push(await transcribeImage(image));
+    } catch (error) {
+      failed++;
+      console.error("page failed:", error);
+      pages.push("[Error extracting text from this page]");
+    }
+  }
+
+  if (failed === images.length) {
+    await quota.reservation.release();
+    return json(req, { error: "Could not read this page. Try again.", code: "OCR_FAILED" }, 502);
+  }
+  return json(req, { text: pages.join("\n\n"), pages, pagesLeftToday: quota.reservation.remaining });
 });

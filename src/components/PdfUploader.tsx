@@ -3,6 +3,7 @@ import { Upload, FileText, Loader2, X, ScanText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { OcrError, readScannedPages } from '@/lib/ocr';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Configure PDF.js worker
@@ -77,17 +78,18 @@ export default function PdfUploader({ onTextExtracted, disabled }: PdfUploaderPr
   };
 
   const performOcr = async (images: string[]): Promise<string> => {
-    setProcessingStatus(`Running OCR on ${images.length} page(s)...`);
-    
-    const response = await supabase.functions.invoke('ocr-pdf', {
-      body: { images },
-    });
-
-    if (response.error) {
-      throw new Error(response.error.message || 'OCR failed');
+    try {
+      return await readScannedPages(images, ({ done, total }) =>
+        setProcessingStatus(`Reading page ${Math.min(done + 1, total)} of ${total}...`),
+      );
+    } catch (e) {
+      if (e instanceof OcrError && e.code === 'OCR_QUOTA') {
+        const partial = (e as OcrError & { partial?: string }).partial ?? '';
+        toast.warning(e.message);
+        if (partial.trim()) return partial;
+      }
+      throw e;
     }
-
-    return response.data.text;
   };
 
   const handleFile = useCallback(async (file: File) => {

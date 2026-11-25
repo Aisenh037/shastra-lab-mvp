@@ -44,6 +44,46 @@ The scheduler needs three Vault secrets per environment: `project_url`, `anon_ke
 
 Old submissions keep working. Photos uploaded before the change were saved as public URLs; they stop loading once the bucket is private, which is intended.
 
+## Sign-in, email and password reset
+
+The app has email + password sign-up with confirmation, **Forgot password** (`/reset-password`),
+resend-confirmation, and **Continue with Google**. Three things are set in the Supabase dashboard,
+not in code:
+
+**1. Email delivery (required before any real user can sign up).** Without custom SMTP, Supabase only
+emails members of your Supabase team; everyone else gets "Email address not authorized".
+
+- *Recommended:* a domain (e.g. `shastralab.in`, ~₹800/yr) + [Resend](https://resend.com) free tier
+  (100 emails/day). Resend → Domains → add `mail.shastralab.in`, add the DNS records it shows, wait for
+  *Verified*. Resend → API Keys → create one.
+  Supabase → Authentication → Emails → SMTP Settings → enable: host `smtp.resend.com`, port `465`,
+  user `resend`, password = the API key, sender `no-reply@mail.shastralab.in`, name `ShastraLab`.
+- *Until you have a domain:* a dedicated Gmail account (e.g. `shastralab.team@gmail.com`) with 2-step
+  verification on → Google Account → App passwords → create one. SMTP host `smtp.gmail.com`, port `465`,
+  user = the Gmail address, password = the app password, sender = the same address. Fine for the pilot
+  (Gmail allows ~500/day); move to a domain before launch.
+- Then Authentication → Rate Limits → *emails sent per hour*: 60.
+
+**2. Templates.** Authentication → Emails → Templates: paste each file from `supabase/templates/`
+(Confirm signup, Reset password, Magic link, Change email) with the subjects in `supabase/config.toml`.
+
+**3. Google sign-in.** [Google Cloud console](https://console.cloud.google.com) → new project →
+*APIs & Services* → *OAuth consent screen*: External, app name ShastraLab, your support email, publish.
+*Credentials* → Create OAuth client ID → Web application:
+- Authorised JavaScript origins: `https://shastralab-1694.onrender.com`
+- Authorised redirect URI: `https://xcrlxcyicagthchxasgx.supabase.co/auth/v1/callback`
+
+Copy the client ID and secret into Supabase → Authentication → Sign In / Providers → Google → enable.
+
+**Also in Authentication:**
+- *URL Configuration:* Site URL `https://shastralab-1694.onrender.com`; Redirect URLs `https://shastralab-1694.onrender.com/**`
+  (password-reset links fail without this).
+- *Providers → Email:* Confirm email **on**; minimum password length **8**; password requirements *letters and digits*.
+
+**Test:** sign up with a fresh address → confirmation email arrives → link opens the dashboard.
+Sign out → *Forgot password?* → email → link opens *Set a new password* → saved → dashboard.
+*Continue with Google* → account picker → dashboard.
+
 ## Photo and scanned-PDF reading limits
 
 Reading photos and scanned pages costs AI quota but no credit, so each user gets

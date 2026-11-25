@@ -8,6 +8,13 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import Settings from "./pages/Settings";
+import Privacy from "./pages/legal/Privacy";
+import Terms from "./pages/legal/Terms";
+import Refunds from "./pages/legal/Refunds";
+import Delivery from "./pages/legal/Delivery";
+import Contact from "./pages/legal/Contact";
+import About from "./pages/legal/About";
 import Dashboard from "./pages/Dashboard";
 import Syllabi from "./pages/Syllabi";
 import Analyze from "./pages/Analyze";
@@ -38,6 +45,15 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/refunds" element={<Refunds />} />
+              <Route path="/delivery" element={<Delivery />} />
+              <Route path="/shipping" element={<Delivery />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/pricing" element={<About />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/syllabi" element={<Syllabi />} />
               <Route path="/analyze" element={<Analyze />} />

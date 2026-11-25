@@ -93,6 +93,14 @@ export interface ChatResult {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+export const isOpenRouter = (url: string) => {
+  try {
+    return new URL(url).hostname.endsWith("openrouter.ai");
+  } catch {
+    return false;
+  }
+};
+
 export async function chat(opts: ChatOptions): Promise<ChatResult> {
   const providers = opts.providers ?? textProviders();
   if (providers.length === 0) {
@@ -110,6 +118,11 @@ export async function chat(opts: ChatOptions): Promise<ChatResult> {
       if (p.model) body.model = p.model;
       if (p.reasoningEffort) body.reasoning_effort = p.reasoningEffort;
       if (json) body.response_format = { type: "json_object" };
+      // Students' answers must not train anyone's model: on OpenRouter, only route to
+      // providers that don't collect prompts. OPENROUTER_DATA_COLLECTION=allow turns this off.
+      if (isOpenRouter(p.url) && (Deno.env.get("OPENROUTER_DATA_COLLECTION") ?? "deny") !== "allow") {
+        body.provider = { data_collection: "deny" };
+      }
 
       let res: Response;
       try {

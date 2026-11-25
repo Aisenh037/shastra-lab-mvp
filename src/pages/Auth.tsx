@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,9 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { GraduationCap, PenLine, Target, TrendingUp, MailCheck, ArrowLeft } from "lucide-react";
 import { z } from "zod";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Link, useNavigate } from "react-router-dom";
+import { LegalFooter } from "@/components/legal/LegalFooter";
 import { authErrorFromUrl, friendlyAuthError, MIN_PASSWORD_LENGTH, passwordProblem } from "@/lib/auth-messages";
 
 const emailSchema = z.string().trim().email("Enter a valid email address");
@@ -41,6 +43,7 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resetEmail, setResetEmail] = useState("");
   const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
+  const [consented, setConsented] = useState(false);
 
   useEffect(() => {
     if (user && !loading) navigate("/dashboard");
@@ -87,6 +90,7 @@ export default function Auth() {
     const problem = passwordProblem(signupPassword, email);
     if (problem) return toast.error(problem);
     if (signupPassword !== confirmPassword) return toast.error("Passwords do not match");
+    if (!consented) return toast.error("Please confirm you are 18+ and accept the Terms and Privacy Policy");
 
     setIsLoading(true);
     const { error, needsConfirmation } = await signUp(email, signupPassword, signupName.trim() || undefined);
@@ -156,6 +160,10 @@ export default function Auth() {
         <GoogleIcon />
         {isGoogleLoading ? "Connecting..." : label}
       </Button>
+      <p className="text-xs text-muted-foreground text-center mt-3">
+        By continuing you agree to our <Link to="/terms" className="underline">Terms</Link> and{" "}
+        <Link to="/privacy" className="underline">Privacy Policy</Link>.
+      </p>
     </>
   );
 
@@ -195,7 +203,7 @@ export default function Auth() {
       </div>
 
       {/* Right side - Auth Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex flex-col items-center justify-center p-8">
         <Card className="w-full max-w-md border-0 shadow-lg animate-scale-in">
           <CardHeader className="text-center">
             <div className="flex items-center justify-center gap-2 mb-4 lg:hidden">
@@ -317,7 +325,16 @@ export default function Auth() {
                       <Label htmlFor="confirm-password">Confirm Password</Label>
                       <Input id="confirm-password" type="password" autoComplete="new-password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
                     </div>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
+                    <label className="flex items-start gap-3 text-sm">
+                      <Checkbox checked={consented} onCheckedChange={(v) => setConsented(v === true)} aria-label="I am 18 or older and accept the Terms and Privacy Policy" className="mt-0.5" />
+                      <span className="text-muted-foreground">
+                        I'm 18 or older and agree to the{" "}
+                        <Link to="/terms" target="_blank" className="text-primary underline">Terms</Link> and{" "}
+                        <Link to="/privacy" target="_blank" className="text-primary underline">Privacy Policy</Link>, including that my
+                        answers are sent to AI providers to be evaluated.
+                      </span>
+                    </label>
+                    <Button type="submit" className="w-full" disabled={isLoading || !consented}>
                       {isLoading ? "Creating account..." : "Create Account"}
                     </Button>
                     {googleButton("Sign up with Google")}
@@ -327,6 +344,9 @@ export default function Auth() {
             )}
           </CardContent>
         </Card>
+        <div className="mt-6 flex justify-center">
+          <LegalFooter compact />
+        </div>
       </div>
     </div>
   );

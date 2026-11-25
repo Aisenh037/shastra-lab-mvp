@@ -25,6 +25,19 @@ services:
         sync: false
       - key: VITE_PAYMENT_LINK_30
         sync: false
+      # Business details for the legal pages (see src/config/legal.ts). Razorpay checks these.
+      - key: VITE_LEGAL_OPERATOR
+        sync: false
+      - key: VITE_LEGAL_ADDRESS
+        sync: false
+      - key: VITE_LEGAL_EMAIL
+        sync: false
+      - key: VITE_LEGAL_PHONE
+        sync: false
+      - key: VITE_LEGAL_GRIEVANCE_OFFICER
+        sync: false
+      - key: VITE_LEGAL_GRIEVANCE_EMAIL
+        sync: false
     routes:
       # Single-page app: every path serves index.html so deep links and refreshes work.
       - type: rewrite

@@ -18,12 +18,13 @@ import {
   ClipboardList,
   Timer,
   Trophy,
-  Award
-} from 'lucide-react';
+  Award, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ShastraLabLogo from '@/components/ShastraLabLogo';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { CreditsBadge } from '@/components/Credits';
+import { ConsentGate } from '@/components/legal/ConsentGate';
+import { LegalFooter } from '@/components/legal/LegalFooter';
 import { features } from '@/config/features';
 
 interface AppLayoutProps {
@@ -44,6 +45,7 @@ const navItems = [
   { path: '/submission-history', label: 'My Progress', icon: ClipboardList },
   { path: '/questions', label: 'Question Bank', icon: Library },
   { path: '/reports', label: 'Reports', icon: BarChart3 },
+  { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function AppLayout({ children }: AppLayoutProps) {
@@ -77,6 +79,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background flex">
+      <ConsentGate />
       {/* Mobile menu button */}
       <button
         className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-card shadow-md"
@@ -150,6 +153,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <LogOut className="h-5 w-5 mr-3" />
               Sign Out
             </Button>
+            <LegalFooter compact />
           </div>
         </div>
       </aside>

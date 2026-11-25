@@ -84,6 +84,44 @@ Copy the client ID and secret into Supabase → Authentication → Sign In / Pro
 Sign out → *Forgot password?* → email → link opens *Set a new password* → saved → dashboard.
 *Continue with Google* → account picker → dashboard.
 
+## Legal pages and privacy (DPDP Act)
+
+Public pages: `/about` (with pricing), `/terms`, `/privacy`, `/refunds`, `/delivery` (also `/shipping`), `/contact`.
+They're linked from the landing page, the sign-in page and the app sidebar. These are the pages Razorpay asks for
+when activating live mode.
+
+**Before Razorpay live mode:** set the `VITE_LEGAL_*` variables on Render (Dashboard → shastralab-1694 →
+Environment), then redeploy. Until they're set, the pages show a "Draft" banner and placeholders. Use the same
+legal name, address and phone that you give Razorpay at KYC. Have a lawyer read the Terms and Privacy Policy before
+a public launch; they're written for this product, but they aren't legal advice.
+
+**What's built in:**
+- *Consent:* sign-up requires a checkbox (18+, Terms, Privacy, AI processing); the record lands in `user_consents`.
+  Google users, and everyone after a policy change, see a one-time prompt in the app.
+  To change a policy: edit the page, bump `POLICY_VERSIONS` in `src/config/legal.ts`, deploy.
+- *Access:* Settings → Your data → Download (all tables, as JSON).
+- *Erasure:* Settings → Delete account (type your email to confirm). Removes answer photos and the account; every
+  user table cascades. Payment records stay, detached from the person, for tax law.
+- *AI providers:* OpenRouter requests carry `provider.data_collection = "deny"`, so they're only routed to providers
+  that don't train on or store prompts. If a free model has no such provider, the request falls back to the next
+  provider. In the Groq console, turn on *Zero Data Retention* (Settings → Data Controls).
+
+**Requests by email** (from the address on the account):
+
+```sql
+-- correction, e.g. name
+update profiles set full_name = 'New Name' where email = 'aspirant@example.com';
+-- who agreed to what
+select * from user_consents where user_id = (select id from auth.users where email = 'aspirant@example.com');
+```
+
+Respond to grievances within 90 days at most (DPDP Rules); aim for 2 working days.
+
+**Still to do for full DPDP compliance by 13 May 2027:** a written breach-response plan (who notifies users and the
+Data Protection Board, and within what time); a yearly check that the processors listed in the Privacy Policy are
+still the real ones; the 3-year inactive-account cleanup the Privacy Policy promises (a scheduled job, plus an email
+30 days before).
+
 ## Photo and scanned-PDF reading limits
 
 Reading photos and scanned pages costs AI quota but no credit, so each user gets

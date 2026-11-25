@@ -182,6 +182,12 @@ export type Database = {
         Update: { status?: string; payment_id?: string | null; paid_at?: string | null }
         Relationships: []
       }
+      user_consents: {
+        Row: { id: string; user_id: string; terms_version: string; privacy_version: string; age_confirmed: boolean; source: string; accepted_at: string }
+        Insert: { user_id: string; terms_version: string; privacy_version: string; age_confirmed: boolean; source: string }
+        Update: { terms_version?: string }
+        Relationships: []
+      }
       ocr_usage: {
         Row: { user_id: string; day: string; pages: number; updated_at: string }
         Insert: { user_id: string; day: string; pages?: number }
@@ -570,6 +576,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      record_consent: {
+        Args: { p_terms_version: string; p_privacy_version: string; p_age_confirmed: boolean }
+        Returns: undefined
+      }
       check_achievements: {
         Args: { p_user_id: string }
         Returns: {

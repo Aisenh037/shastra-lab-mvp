@@ -88,3 +88,9 @@ enabled = true
 client_id = "env(GOOGLE_CLIENT_ID)"
 secret = "env(GOOGLE_CLIENT_SECRET)"
 skip_nonce_check = false
+
+[functions.export-my-data]
+verify_jwt = true
+
+[functions.delete-account]
+verify_jwt = true

@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { AuthChangeEvent, User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { POLICY_VERSIONS } from '@/config/legal';
 
 type Result = { error: Error | null };
 
@@ -55,7 +56,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         emailRedirectTo: `${origin()}/dashboard`,
-        data: { full_name: fullName },
+        // Consent given on the sign-up form; copied into user_consents by a database trigger.
+        data: {
+          full_name: fullName,
+          terms_version: POLICY_VERSIONS.terms,
+          privacy_version: POLICY_VERSIONS.privacy,
+          age_confirmed: true,
+        },
       },
     });
     return { error: error as Error | null, needsConfirmation: !error && !data.session };
